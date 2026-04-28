@@ -11,7 +11,9 @@ interface Rider {
   feId: string;
   fullName: string;
   phone: string;
-  token: string;
+  token: number;
+  status: "checked-in" | "checked-out";
+  date: string;
   createdAt: Date;
 }
 
@@ -34,6 +36,24 @@ function formatDateTime(date: Date) {
   return `${datePart}, ${timePart}`;
 }
 
+/* ── Status Badge ────────────────── */
+
+function StatusBadge({ status }: { status: Rider["status"] }) {
+  const isActive = status === "checked-in";
+
+  return (
+    <span
+      className="px-3 py-1 rounded-full text-xs font-medium"
+      style={{
+        backgroundColor: isActive ? "#dcfce7" : "#f1f5f9",
+        color: isActive ? "#16a34a" : "#64748b",
+      }}
+    >
+      {isActive ? "Checked In" : "Checked Out"}
+    </span>
+  );
+}
+
 /* ── Page ───────────────────────── */
 
 export default function RidersPage() {
@@ -46,7 +66,7 @@ export default function RidersPage() {
       try {
         const res = await fetch("/api/rider");
         const data = await res.json();
-        
+
         if (res.ok && data.success) {
           setRiders(data.data);
         } else {
@@ -75,17 +95,17 @@ export default function RidersPage() {
             className="text-2xl font-bold"
             style={{ color: themeColors.textPrimary }}
           >
-            Rider Details
+            Rider Queue Dashboard
           </h1>
           <p
             className="text-sm mt-1"
             style={{ color: themeColors.textSecondary }}
           >
-            Manage All Riders
+            Live check-in / check-out tracking
           </p>
         </div>
 
-        {/* Table / Loading / Error States */}
+        {/* States */}
         {loading ? (
           <div
             className="flex justify-center items-center py-20 border rounded-xl"
@@ -94,8 +114,13 @@ export default function RidersPage() {
               backgroundColor: themeColors.cardBackground,
             }}
           >
-            <Loader2 className="w-6 h-6 animate-spin mr-2" style={{ color: themeColors.primary }} />
-            <span style={{ color: themeColors.textSecondary }}>Loading riders...</span>
+            <Loader2
+              className="w-6 h-6 animate-spin mr-2"
+              style={{ color: themeColors.primary }}
+            />
+            <span style={{ color: themeColors.textSecondary }}>
+              Loading riders...
+            </span>
           </div>
         ) : error ? (
           <div
@@ -103,7 +128,7 @@ export default function RidersPage() {
             style={{
               borderColor: themeColors.border,
               backgroundColor: themeColors.cardBackground,
-              color: "#ef4444", // Red color for error
+              color: "#ef4444",
             }}
           >
             {error}
@@ -129,6 +154,7 @@ export default function RidersPage() {
           >
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
+                {/* Header */}
                 <thead
                   style={{
                     backgroundColor: themeColors.background,
@@ -140,10 +166,12 @@ export default function RidersPage() {
                     <th className="text-left px-4 py-3">Full Name</th>
                     <th className="text-left px-4 py-3">Phone</th>
                     <th className="text-left px-4 py-3">Token</th>
-                    <th className="text-left px-4 py-3">Created At</th>
+                    <th className="text-left px-4 py-3">Status</th>
+                    <th className="text-left px-4 py-3">Time</th>
                   </tr>
                 </thead>
 
+                {/* Body */}
                 <tbody>
                   {riders.map((rider, index) => (
                     <tr
@@ -169,8 +197,12 @@ export default function RidersPage() {
 
                       <td className="px-4 py-3">{rider.phone}</td>
 
-                      <td className="px-4 py-3 font-mono text-xs">
-                        {rider.token}
+                      <td className="px-4 py-3 font-bold text-orange-500">
+                        #{rider.token}
+                      </td>
+
+                      <td className="px-4 py-3">
+                        <StatusBadge status={rider.status} />
                       </td>
 
                       <td className="px-4 py-3 text-xs">
@@ -183,7 +215,6 @@ export default function RidersPage() {
             </div>
           </div>
         )}
-
       </div>
     </div>
   );

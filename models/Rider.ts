@@ -5,6 +5,7 @@ export interface IRider extends Document {
   fullName: string;
   phone: string;
   token: string;
+  status: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -14,7 +15,6 @@ const RiderSchema: Schema = new Schema(
     feId: {
       type: String,
       required: true,
-      unique: true,
     },
     fullName: {
       type: String,
@@ -27,6 +27,11 @@ const RiderSchema: Schema = new Schema(
     token: {
       type: String,
       required: true,
+    },
+    status: {
+      type: String,
+      enum: ["checked-in", "checked-out"],
+      default: "checked-in",
     },
   },
   { timestamps: true },
