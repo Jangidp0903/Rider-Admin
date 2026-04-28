@@ -1,17 +1,70 @@
 "use client";
 
+import { useState, useEffect, useMemo } from "react";
 import DashboardCard from "@/components/DashboardCard";
-import { Users, UserCheck, UserX, Clock } from "lucide-react";
+import { Users, UserCheck, UserX, Clock, Loader2 } from "lucide-react";
 import { themeColors } from "@/lib/themeColors";
 
+interface Rider {
+  _id: string;
+  status: "checked-in" | "checked-out";
+  createdAt: string;
+}
+
 export default function Dashboard() {
-  // Rider dummy stats
-  const stats = {
-    totalRiders: 42,
-    checkedIn: 28,
-    checkedOut: 10,
-    pending: 4,
-  };
+  const [riders, setRiders] = useState<Rider[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const fetchRiders = async () => {
+      try {
+        const res = await fetch("/api/rider");
+        const data = await res.json();
+        if (res.ok && data.success) {
+          setRiders(data.data);
+        } else {
+          setError(data.error || "Failed to fetch data");
+        }
+      } catch (err) {
+        console.error("Error fetching dashboard stats:", err);
+        setError("Connection error");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchRiders();
+  }, []);
+
+  const stats = useMemo(() => {
+    const totalRiders = riders.length;
+    const checkedIn = riders.filter((r) => r.status === "checked-in").length;
+    const checkedOut = riders.filter((r) => r.status === "checked-out").length;
+    
+    // Calculate today's registrations
+    const today = new Date().toDateString();
+    const todayCount = riders.filter((r) => 
+      new Date(r.createdAt).toDateString() === today
+    ).length;
+
+    return {
+      totalRiders,
+      checkedIn,
+      checkedOut,
+      todayCount,
+    };
+  }, [riders]);
+
+  if (loading) {
+    return (
+      <div className="w-full h-[60vh] flex flex-col items-center justify-center gap-3">
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: themeColors.primary }} />
+        <p className="text-sm font-medium" style={{ color: themeColors.textSecondary }}>
+          Loading dashboard data...
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full px-4 py-6">
@@ -37,6 +90,12 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {error && (
+          <div className="p-4 rounded-xl border border-red-100 bg-red-50 text-red-600 text-sm font-medium">
+            {error}
+          </div>
+        )}
+
         {/* Rider Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <DashboardCard
@@ -54,7 +113,7 @@ export default function Dashboard() {
             value={stats.checkedOut}
             icon={UserX}
           />
-          <DashboardCard title="Pending" value={stats.pending} icon={Clock} />
+          <DashboardCard title="Today's Total" value={stats.todayCount} icon={Clock} />
         </div>
       </div>
     </div>

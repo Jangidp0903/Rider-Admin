@@ -410,7 +410,6 @@ function FilterDrawer({
   // Sync temp filters with actual filters whenever drawer opens
   // We handle this by using a key on the component in the parent
 
-
   const handleTempChange = useCallback(
     <K extends keyof FilterState>(key: K, value: FilterState[K]) => {
       setTempFilters((prev) => ({ ...prev, [key]: value }));
@@ -612,8 +611,6 @@ export default function RidersPage() {
     setFilters(DEFAULT_FILTERS);
   }, []);
 
-
-
   // Stats
   const stats = useMemo(() => {
     const checkedIn = riders.filter((r) => r.status === "checked-in").length;
@@ -764,17 +761,11 @@ export default function RidersPage() {
           <button
             onClick={downloadCSV}
             disabled={filteredRiders.length === 0 || loading}
-            className="self-start sm:self-auto flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-white flex-shrink-0"
+            className="self-start sm:self-auto cursor-pointer flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-white flex-shrink-0"
             style={{ backgroundColor: themeColors.primary }}
           >
             <Download className="w-4 h-4" />
             Export CSV
-            <span
-              className="ml-0.5 px-1.5 py-0.5 rounded-md text-xs font-black"
-              style={{ backgroundColor: "rgba(255,255,255,0.2)" }}
-            >
-              {filteredRiders.length}
-            </span>
           </button>
         </div>
 
