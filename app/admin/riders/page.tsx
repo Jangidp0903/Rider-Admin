@@ -13,13 +13,12 @@ interface Rider {
   phone: string;
   token: number;
   status: "checked-in" | "checked-out";
-  date: string;
-  createdAt: Date;
+  createdAt: string;
 }
 
 /* ── Helpers ─────────────────────── */
 
-function formatDateTime(date: Date) {
+function formatDateTime(date: string) {
   const d = new Date(date);
 
   const datePart = d.toLocaleDateString("en-IN", {
