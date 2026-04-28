@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
+import axios, { AxiosError } from "axios";
 import { themeColors } from "@/lib/themeColors";
 import {
   Loader2,
@@ -578,20 +579,16 @@ export default function RidersPage() {
   useEffect(() => {
     const fetchRiders = async () => {
       try {
-        const res = await fetch("/api/rider");
-        const data = (await res.json()) as {
-          success: boolean;
-          data: Rider[];
-          error?: string;
-        };
-        if (res.ok && data.success) {
-          setRiders(data.data);
+        const res = await axios.get("/api/rider");
+        if (res.data.success) {
+          setRiders(res.data.data);
         } else {
-          setError(data.error ?? "Failed to fetch riders");
+          setError(res.data.error ?? "Failed to fetch riders");
         }
-      } catch (err: unknown) {
+      } catch (err) {
         console.error("Error fetching riders:", err);
-        setError("An error occurred while fetching riders.");
+        const axiosError = err as AxiosError<{ error: string }>;
+        setError(axiosError.response?.data?.error ?? "An error occurred while fetching riders.");
       } finally {
         setLoading(false);
       }

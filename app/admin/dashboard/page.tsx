@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import axios, { AxiosError } from "axios";
 import DashboardCard from "@/components/DashboardCard";
 import { Users, UserCheck, UserX, Clock, Loader2 } from "lucide-react";
 import { themeColors } from "@/lib/themeColors";
@@ -19,16 +20,16 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchRiders = async () => {
       try {
-        const res = await fetch("/api/rider");
-        const data = await res.json();
-        if (res.ok && data.success) {
-          setRiders(data.data);
+        const res = await axios.get("/api/rider");
+        if (res.data.success) {
+          setRiders(res.data.data);
         } else {
-          setError(data.error || "Failed to fetch data");
+          setError(res.data.error || "Failed to fetch data");
         }
       } catch (err) {
         console.error("Error fetching dashboard stats:", err);
-        setError("Connection error");
+        const axiosError = err as AxiosError<{ error: string }>;
+        setError(axiosError.response?.data?.error || "Connection error");
       } finally {
         setLoading(false);
       }
