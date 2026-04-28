@@ -29,6 +29,21 @@ const Topbar = ({
   const userBtnRef = useRef(null);
 
   const [pageTitle] = useState("Dashboard");
+  const [adminName, setAdminName] = useState("Admin");
+
+  useEffect(() => {
+    const fetchAdmin = async () => {
+      try {
+        const res = await apiClient.get("/api/auth/me");
+        if (res.data && res.data.username) {
+          setAdminName(res.data.username);
+        }
+      } catch (err) {
+        console.error("Failed to fetch admin data", err);
+      }
+    };
+    fetchAdmin();
+  }, []);
 
   // Device detection
   useEffect(() => {
@@ -141,7 +156,7 @@ const Topbar = ({
                 className="text-sm font-bold truncate max-w-[80px] sm:max-w-none"
                 style={{ color: themeColors.textPrimary }}
               >
-                Puneet Jangid
+                {adminName}
               </p>
             </div>
             <div
@@ -186,7 +201,7 @@ const Topbar = ({
                       className="font-bold text-sm truncate"
                       style={{ color: themeColors.textPrimary }}
                     >
-                      Puneet Jangid
+                      {adminName}
                     </p>
                     <p
                       className="text-xs truncate"

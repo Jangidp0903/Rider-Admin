@@ -25,7 +25,7 @@ export async function POST(req: Request) {
 
     /* 🔍 Find today's entries of same FE */
     const todayEntries = await Rider.find({
-      feId,
+      phone,
       createdAt: { $gte: startOfDay, $lte: endOfDay },
     }).sort({ createdAt: 1 });
 

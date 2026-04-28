@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { themeColors } from "@/lib/themeColors";
-import { Loader2 } from "lucide-react";
+import { Loader2, Download } from "lucide-react";
 
 /* ── Types ───────────────────────── */
 
@@ -82,26 +82,90 @@ export default function RidersPage() {
     fetchRiders();
   }, []);
 
+  const downloadCSV = () => {
+    if (riders.length === 0) return;
+
+    // Define headers
+    const headers = [
+      "FE ID",
+      "Full Name",
+      "Phone",
+      "Token",
+      "Status",
+      "Date/Time",
+    ];
+
+    // Create rows
+    const rows = riders.map((rider) => [
+      `"${rider.feId}"`,
+      `"${rider.fullName}"`,
+      `"${rider.phone}"`,
+      `"${rider.token}"`,
+      `"${rider.status}"`,
+      `"${formatDateTime(rider.createdAt)}"`,
+    ]);
+
+    // Construct CSV content
+    const csvContent = [
+      headers.join(","),
+      ...rows.map((row) => row.join(",")),
+    ].join("\n");
+
+    // Create a blob and download it
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute(
+      "download",
+      `riders_report_${new Date().toISOString().split("T")[0]}.csv`,
+    );
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="w-full px-4 py-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div
-          className="pb-4 border-b"
+          className="pb-4 border-b flex items-center justify-between"
           style={{ borderColor: themeColors.border }}
         >
-          <h1
-            className="text-2xl font-bold"
-            style={{ color: themeColors.textPrimary }}
+          <div>
+            <h1
+              className="text-2xl font-bold"
+              style={{ color: themeColors.textPrimary }}
+            >
+              Rider Queue Dashboard
+            </h1>
+            <p
+              className="text-sm mt-1"
+              style={{ color: themeColors.textSecondary }}
+            >
+              Live check-in / check-out tracking
+            </p>
+          </div>
+
+          <button
+            onClick={downloadCSV}
+            disabled={riders.length === 0 || loading}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-white"
+            style={{
+              backgroundColor: themeColors.primary,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = themeColors.primaryHover;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = themeColors.primary;
+            }}
           >
-            Rider Queue Dashboard
-          </h1>
-          <p
-            className="text-sm mt-1"
-            style={{ color: themeColors.textSecondary }}
-          >
-            Live check-in / check-out tracking
-          </p>
+            <Download className="w-4 h-4" />
+            Export CSV
+          </button>
         </div>
 
         {/* States */}
