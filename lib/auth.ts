@@ -29,7 +29,7 @@ export const generateRefreshToken = (payload: object) => {
 export const verifyAccessToken = (token: string) => {
   try {
     return jwt.verify(token, JWT_SECRET);
-  } catch (error) {
+  } catch {
     return null;
   }
 };
@@ -37,7 +37,7 @@ export const verifyAccessToken = (token: string) => {
 export const verifyRefreshToken = (token: string) => {
   try {
     return jwt.verify(token, REFRESH_TOKEN_SECRET);
-  } catch (error) {
+  } catch {
     return null;
   }
 };

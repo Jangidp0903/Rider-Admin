@@ -43,9 +43,9 @@ export async function PATCH(req: Request) {
     }
 
     return NextResponse.json({ message: "Profile updated successfully", admin: updatedAdmin });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { error: error.message || "Internal server error" },
+      { error: (error as Error).message || "Internal server error" },
       { status: 500 }
     );
   }

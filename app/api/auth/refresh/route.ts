@@ -13,7 +13,7 @@ export async function POST() {
       return NextResponse.json({ error: "No refresh token provided" }, { status: 401 });
     }
 
-    const decoded: any = verifyRefreshToken(refreshToken);
+    const decoded = verifyRefreshToken(refreshToken) as { id: string } | null;
     if (!decoded) {
       return NextResponse.json({ error: "Invalid refresh token" }, { status: 401 });
     }
@@ -56,7 +56,7 @@ export async function POST() {
     });
 
     return response;
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
   }
 }

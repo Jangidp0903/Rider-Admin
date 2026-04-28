@@ -46,9 +46,9 @@ export default function SettingsPage() {
           username: res.data.username || "",
           email: res.data.email || "",
         });
-      } catch (err: any) {
+      } catch (err: unknown) {
         showToast(
-          err.response?.data?.error || "Failed to fetch profile",
+          (err as { response?: { data?: { error?: string } } }).response?.data?.error || "Failed to fetch profile",
           "error",
         );
       } finally {
@@ -73,11 +73,11 @@ export default function SettingsPage() {
       setProfileSaved(true);
       showToast("Profile updated successfully", "success");
       setTimeout(() => setProfileSaved(false), 2500);
-    } catch (err: any) {
-      showToast(
-        err.response?.data?.error || "Failed to update profile",
-        "error",
-      );
+    } catch (err: unknown) {
+        showToast(
+          (err as { response?: { data?: { error?: string } } }).response?.data?.error || "Failed to update profile",
+          "error",
+        );
     } finally {
       setProfileSaving(false);
     }
@@ -115,9 +115,9 @@ export default function SettingsPage() {
       });
       showToast("Password updated successfully", "success");
       setTimeout(() => setPasswordUpdated(false), 2500);
-    } catch (err: any) {
+    } catch (err: unknown) {
       showToast(
-        err.response?.data?.error || "Failed to update password",
+        (err as { response?: { data?: { error?: string } } }).response?.data?.error || "Failed to update password",
         "error",
       );
     } finally {

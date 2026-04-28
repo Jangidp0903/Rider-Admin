@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { AlertTriangle, X, Trash2 } from "lucide-react";
+import { AlertTriangle, Trash2 } from "lucide-react";
 import { themeColors } from "@/lib/themeColors";
 
 interface DeleteModalProps {

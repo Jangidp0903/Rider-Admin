@@ -3,7 +3,6 @@ import React from "react";
 import { usePathname } from "next/navigation";
 import { Settings, X, LayoutDashboard, Bike, Users } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
 import { themeColors } from "@/lib/themeColors";
 
 const menuItems = [

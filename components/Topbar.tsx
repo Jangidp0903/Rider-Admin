@@ -28,7 +28,7 @@ const Topbar = ({
   const userDropdownRef = useRef(null);
   const userBtnRef = useRef(null);
 
-  const [pageTitle, setPageTitle] = useState("Dashboard");
+  const [pageTitle] = useState("Dashboard");
 
   // Device detection
   useEffect(() => {
@@ -44,7 +44,7 @@ const Topbar = ({
       await apiClient.post("/api/auth/logout");
       showToast("Logout successfully", "success");
       window.location.href = "/login";
-    } catch (err) {
+    } catch {
       showToast("Logout failed", "error");
     }
     setShowUserDropdown(false);

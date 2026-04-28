@@ -42,9 +42,9 @@ export async function PATCH(req: Request) {
     await admin.save();
 
     return NextResponse.json({ message: "Password updated successfully" });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { error: error.message || "Internal server error" },
+      { error: (error as Error).message || "Internal server error" },
       { status: 500 }
     );
   }

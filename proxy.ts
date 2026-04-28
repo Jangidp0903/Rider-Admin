@@ -19,7 +19,7 @@ export async function proxy(request: NextRequest) {
     // Allow your frontend origin
     response.headers.set(
       "Access-Control-Allow-Origin",
-      "http://localhost:3001",
+      "https://ev-zomato.vercel.app",
     );
     response.headers.set(
       "Access-Control-Allow-Methods",
@@ -55,7 +55,7 @@ export async function proxy(request: NextRequest) {
       const secret = new TextEncoder().encode(JWT_SECRET);
       await jwtVerify(token, secret);
       return NextResponse.next();
-    } catch (error) {
+    } catch {
       // Access token expired or invalid, check for refresh token
       // Note: Full auto-refresh in middleware is complex due to DB access needs.
       // For this project, we'll redirect to login if access token fails.
@@ -69,7 +69,7 @@ export async function proxy(request: NextRequest) {
       const secret = new TextEncoder().encode(JWT_SECRET);
       await jwtVerify(token, secret);
       return NextResponse.redirect(new URL("/admin/dashboard", request.url));
-    } catch (error) {
+    } catch {
       // Invalid token, ignore and let them access login
     }
   }
