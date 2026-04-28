@@ -1,22 +1,22 @@
 "use client";
 
 import DashboardCard from "@/components/DashboardCard";
-import { FolderKanban, FileText, Mail, Activity } from "lucide-react";
+import { Users, UserCheck, UserX, Clock } from "lucide-react";
 import { themeColors } from "@/lib/themeColors";
 
 export default function Dashboard() {
-  // Static data
+  // Rider dummy stats
   const stats = {
-    projects: 12,
-    blogs: 8,
-    contacts: 23,
-    visitors: "12,482",
+    totalRiders: 42,
+    checkedIn: 28,
+    checkedOut: 10,
+    pending: 4,
   };
 
   return (
     <div className="w-full px-4 py-6">
       <div className="w-full max-w-full mx-auto space-y-8">
-        {/* Page Header */}
+        {/* Header */}
         <div
           className="pb-2 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-4"
           style={{ borderColor: themeColors.border }}
@@ -26,39 +26,35 @@ export default function Dashboard() {
               className="text-3xl font-bold tracking-tight"
               style={{ color: themeColors.textPrimary }}
             >
-              Overview
+              Rider Overview
             </h1>
             <p
               className="mt-1.5 text-sm"
               style={{ color: themeColors.textSecondary }}
             >
-              Here&apos;s what&apos;s happening with your platform today.
+              Live status of all riders in your system.
             </p>
           </div>
         </div>
 
-        {/* Stats Grid */}
+        {/* Rider Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <DashboardCard
-            title="Total Projects"
-            value={stats.projects}
-            icon={FolderKanban}
+            title="Total Riders"
+            value={stats.totalRiders}
+            icon={Users}
           />
           <DashboardCard
-            title="Total Blogs"
-            value={stats.blogs}
-            icon={FileText}
+            title="Checked In"
+            value={stats.checkedIn}
+            icon={UserCheck}
           />
           <DashboardCard
-            title="Contact Enquiries"
-            value={stats.contacts}
-            icon={Mail}
+            title="Checked Out"
+            value={stats.checkedOut}
+            icon={UserX}
           />
-          <DashboardCard
-            title="Site Visitors"
-            value={stats.visitors}
-            icon={Activity}
-          />
+          <DashboardCard title="Pending" value={stats.pending} icon={Clock} />
         </div>
       </div>
     </div>
