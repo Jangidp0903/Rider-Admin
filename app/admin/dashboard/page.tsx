@@ -92,7 +92,14 @@ export default function Dashboard() {
         </div>
 
         {error && (
-          <div className="p-4 rounded-xl border border-red-100 bg-red-50 text-red-600 text-sm font-medium">
+          <div
+            className="p-4 rounded-xl border text-sm font-medium"
+            style={{
+              backgroundColor: themeColors.error + "10",
+              borderColor: themeColors.error + "30",
+              color: themeColors.error,
+            }}
+          >
             {error}
           </div>
         )}

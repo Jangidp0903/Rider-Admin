@@ -22,15 +22,15 @@ interface ToastProps {
 const toastConfig = {
   success: {
     icon: CheckCircle,
-    color: "#10B981",
-    bg: "#ECFDF5",
-    border: "#D1FAE5"
+    color: themeColors.success,
+    bg: themeColors.success + "12",
+    border: themeColors.success + "25"
   },
   error: {
     icon: AlertCircle,
-    color: "#EF4444",
-    bg: "#FEF2F2",
-    border: "#FEE2E2"
+    color: themeColors.error,
+    bg: themeColors.error + "12",
+    border: themeColors.error + "25"
   },
   warning: {
     icon: AlertTriangle,
@@ -40,9 +40,9 @@ const toastConfig = {
   },
   info: {
     icon: Info,
-    color: "#3B82F6",
-    bg: "#EFF6FF",
-    border: "#DBEAFE"
+    color: themeColors.primary,
+    bg: themeColors.primary + "12",
+    border: themeColors.primary + "25"
   }
 };
 

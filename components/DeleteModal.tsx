@@ -66,7 +66,7 @@ export default function DeleteModal({
         {/* Top accent bar */}
         <div
           className="h-[3px] w-full"
-          style={{ backgroundColor: "#ef4444" }}
+          style={{ backgroundColor: themeColors.error }}
           aria-hidden="true"
         />
 
@@ -80,9 +80,9 @@ export default function DeleteModal({
                 flex items-center justify-center
               "
               style={{
-                borderColor: "#fecaca",
-                backgroundColor: "#fef2f2",
-                color: "#ef4444",
+                borderColor: themeColors.error + "30",
+                backgroundColor: themeColors.error + "10",
+                color: themeColors.error,
               }}
               aria-hidden="true"
             >
@@ -156,15 +156,15 @@ export default function DeleteModal({
                 transition-colors duration-150
                 disabled:opacity-70 disabled:cursor-not-allowed
               "
-              style={{ backgroundColor: "#ef4444" }}
+              style={{ backgroundColor: themeColors.error }}
               onMouseEnter={(e) => {
                 if (!isLoading)
                   (e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                    "#dc2626";
+                    themeColors.error + "CC";
               }}
               onMouseLeave={(e) => {
                 (e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                  "#ef4444";
+                  themeColors.error;
               }}
             >
               {isLoading ? (

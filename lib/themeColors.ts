@@ -1,12 +1,12 @@
 export const themeColors = {
-  primary: "#4F46E5",
-  primaryHover: "#4338CA",
-  background: "#F9FAFB",
+  primary: "#EF4F5F",
+  primaryHover: "#D83A4B",
+  background: "#FFF5F5",
   cardBackground: "#FFFFFF",
-  textPrimary: "#111827",
-  textSecondary: "#6B7280",
-  border: "#E5E7EB",
-  sidebarActiveBackground: "#EEF2FF",
-  error: "#EF4444",
-  success: "#10B981"
+  textPrimary: "#1C1C1C",
+  textSecondary: "#696969",
+  border: "#F1F1F1",
+  sidebarActiveBackground: "#FFECEF",
+  error: "#E23744",
+  success: "#2ECC71",
 };

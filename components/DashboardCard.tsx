@@ -42,7 +42,7 @@ export default function DashboardCard({
           className="w-12 h-12 rounded-xl flex items-center justify-center border"
           style={{
             backgroundColor: themeColors.sidebarActiveBackground,
-            borderColor: "rgba(79, 70, 229, 0.1)",
+            borderColor: themeColors.primary + "15",
           }}
         >
           <Icon className="w-6 h-6" style={{ color: themeColors.primary }} />

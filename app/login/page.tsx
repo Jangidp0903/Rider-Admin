@@ -53,20 +53,14 @@ export default function LoginPage() {
         }
 
         :root {
-          --blue-500: #3b82f6;
-          --blue-600: #2563eb;
-          --blue-700: #1d4ed8;
-          --slate-50: #f8fafc;
-          --slate-200: #e2e8f0;
-          --slate-300: #cbd5e1;
-          --slate-400: #94a3b8;
-          --slate-500: #64748b;
-          --slate-700: #334155;
-          --slate-900: #0f172a;
-          --red-50: #fef2f2;
-          --red-200: #fecaca;
-          --red-700: #b91c1c;
-          --white: #ffffff;
+          --primary: ${themeColors.primary};
+          --primary-hover: ${themeColors.primaryHover};
+          --background: ${themeColors.background};
+          --card-bg: ${themeColors.cardBackground};
+          --text-primary: ${themeColors.textPrimary};
+          --text-secondary: ${themeColors.textSecondary};
+          --border: ${themeColors.border};
+          --error: ${themeColors.error};
           --transition: 180ms ease;
         }
 
@@ -75,15 +69,15 @@ export default function LoginPage() {
           display: flex;
           align-items: center;
           justify-content: center;
-          background-color: var(--slate-50);
+          background-color: var(--background);
           padding: 20px;
         }
 
         .login-form-container {
           width: 100%;
           max-width: 420px;
-          background: var(--white);
-          border: 1px solid var(--slate-200);
+          background: var(--card-bg);
+          border: 1px solid var(--border);
           border-radius: 12px;
           padding: 32px 28px;
         }
@@ -97,35 +91,35 @@ export default function LoginPage() {
         .form-icon-wrap {
           width: 48px;
           height: 48px;
-          border: 1.5px solid var(--slate-200);
+          border: 1.5px solid var(--border);
           border-radius: 12px;
           display: flex;
           align-items: center;
           justify-content: center;
-          color: var(--blue-600);
+          color: var(--primary);
           margin: 0 auto 16px;
         }
 
         .form-title {
           font-size: 22px;
           font-weight: 600;
-          color: var(--slate-900);
+          color: var(--text-primary);
           margin-bottom: 6px;
         }
 
         .form-subtitle {
           font-size: 13px;
-          color: var(--slate-500);
+          color: var(--text-secondary);
         }
 
         /* Error */
         .form-error {
           padding: 10px 14px;
-          background-color: var(--red-50);
-          border: 1px solid var(--red-200);
+          background-color: ${themeColors.error}10;
+          border: 1px solid ${themeColors.error}30;
           border-radius: 8px;
           font-size: 13px;
-          color: var(--red-700);
+          color: var(--error);
           text-align: center;
           margin-bottom: 20px;
           font-weight: 500;
@@ -148,7 +142,7 @@ export default function LoginPage() {
         .field-label {
           font-size: 12px;
           font-weight: 500;
-          color: var(--slate-700);
+          color: var(--text-secondary);
           text-transform: uppercase;
         }
 
@@ -161,20 +155,21 @@ export default function LoginPage() {
         .field-icon {
           position: absolute;
           left: 14px;
-          color: var(--slate-400);
+          color: var(--text-secondary);
         }
 
         .field-input {
           width: 100%;
           padding: 11px 14px 11px 42px;
-          border: 1.5px solid var(--slate-200);
+          border: 1.5px solid var(--border);
           border-radius: 8px;
           font-size: 14px;
           outline: none;
+          background-color: white;
         }
 
         .field-input:focus {
-          border-color: var(--blue-500);
+          border-color: var(--primary);
         }
 
         .field-toggle {
@@ -183,15 +178,15 @@ export default function LoginPage() {
           background: none;
           border: none;
           cursor: pointer;
-          color: var(--slate-400);
+          color: var(--text-secondary);
         }
 
         /* Button */
         .submit-btn {
           width: 100%;
           padding: 12px;
-          background-color: var(--blue-600);
-          color: var(--white);
+          background-color: var(--primary);
+          color: white;
           border: none;
           border-radius: 8px;
           cursor: pointer;
@@ -199,6 +194,11 @@ export default function LoginPage() {
           align-items: center;
           justify-content: center;
           gap: 8px;
+          font-weight: 600;
+        }
+
+        .submit-btn:hover {
+          background-color: var(--primary-hover);
         }
 
         .submit-btn:disabled {
@@ -222,7 +222,7 @@ export default function LoginPage() {
           margin-top: 16px;
           font-size: 11px;
           text-align: center;
-          color: var(--slate-400);
+          color: var(--text-secondary);
         }
       `}</style>
 

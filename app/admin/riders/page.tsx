@@ -85,21 +85,24 @@ function StatusPill({ active }: StatusPillProps) {
     <span
       className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full"
       style={{
-        backgroundColor: "#f0fdf4",
-        color: "#16a34a",
-        border: "1px solid #bbf7d0",
+        backgroundColor: themeColors.success + "12",
+        color: themeColors.success,
+        border: `1px solid ${themeColors.success}25`,
       }}
     >
-      <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
+      <span
+        className="w-1.5 h-1.5 rounded-full inline-block animate-pulse"
+        style={{ backgroundColor: themeColors.success }}
+      />
       Active
     </span>
   ) : (
     <span
-      className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full"
+      className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full border"
       style={{
-        backgroundColor: "#fafafa",
-        color: "#a1a1aa",
-        border: `1px solid ${themeColors.border}`,
+        backgroundColor: themeColors.background,
+        color: themeColors.textSecondary,
+        borderColor: themeColors.border,
       }}
     >
       Completed
@@ -446,7 +449,7 @@ export default function RidersPage() {
                         <td className="px-5 py-4">
                           <span
                             className="text-sm font-black tabular-nums"
-                            style={{ color: "#f97316" }}
+                            style={{ color: themeColors.primary }}
                           >
                             #{r.token}
                           </span>
@@ -564,7 +567,10 @@ export default function RidersPage() {
                           </div>
                         </div>
                         <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                          <span className="text-sm font-black text-orange-500">
+                          <span
+                            className="text-sm font-black"
+                            style={{ color: themeColors.primary }}
+                          >
                             #{r.token}
                           </span>
                           <StatusPill active={!r.checkedOutAt} />
