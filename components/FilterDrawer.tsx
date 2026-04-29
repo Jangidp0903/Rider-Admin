@@ -1,10 +1,22 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { Search, Filter, Calendar, ArrowUpDown, X, SlidersHorizontal } from "lucide-react";
+import {
+  Search,
+  Filter,
+  Calendar,
+  ArrowUpDown,
+  X,
+  SlidersHorizontal,
+} from "lucide-react";
 import { themeColors } from "@/lib/themeColors";
 import CustomSelect from "./CustomSelect";
-import { FilterState, StatusFilterType, SortOrderType, DateFilterType } from "@/types/rider";
+import {
+  FilterState,
+  StatusFilterType,
+  SortOrderType,
+  DateFilterType,
+} from "@/types/rider";
 
 /* ── Constants ── */
 const DEFAULT_FILTERS: FilterState = {
@@ -291,7 +303,7 @@ export default function FilterDrawer({
           </div>
           <button
             onClick={onClose}
-            className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors hover:bg-zinc-100"
+            className="w-10 h-10 rounded-xl flex items-center cursor-pointer justify-center transition-colors hover:bg-zinc-100"
             style={{ backgroundColor: themeColors.background }}
           >
             <X size={20} style={{ color: themeColors.textSecondary }} />

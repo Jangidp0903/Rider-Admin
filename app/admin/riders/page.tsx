@@ -3,7 +3,14 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import axios from "axios";
 import { themeColors } from "@/lib/themeColors";
-import { Loader2, Download, Search, SlidersHorizontal } from "lucide-react";
+import {
+  Loader2,
+  Download,
+  Search,
+  SlidersHorizontal,
+  Clock,
+  ArrowRight,
+} from "lucide-react";
 
 import { Rider, FilterState } from "@/types/rider";
 import FilterDrawer from "@/components/FilterDrawer";
@@ -25,13 +32,11 @@ function formatDateTime(date: string) {
   };
 }
 
-function getDurationMinutes(checkIn: string, checkOut?: string | null) {
+function getDurationMinutes(checkIn: string, checkOut?: string | null): string {
   if (!checkOut) return "-";
-
-  const start = new Date(checkIn).getTime();
-  const end = new Date(checkOut).getTime();
-
-  const diff = Math.floor((end - start) / (1000 * 60));
+  const diff = Math.floor(
+    (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60),
+  );
   return `${diff} min`;
 }
 
@@ -45,13 +50,69 @@ const DEFAULT_FILTERS: FilterState = {
   sortOrder: "latest",
 };
 
+/* ── Sub-components ─────────────── */
+
+interface TimeBlockProps {
+  dateStr: string;
+  timeStr: string;
+}
+
+function TimeBlock({ dateStr, timeStr }: TimeBlockProps) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span
+        className="text-sm font-semibold tabular-nums"
+        style={{ color: themeColors.textPrimary }}
+      >
+        {timeStr}
+      </span>
+      <span
+        className="text-[11px] font-medium"
+        style={{ color: themeColors.textSecondary }}
+      >
+        {dateStr}
+      </span>
+    </div>
+  );
+}
+
+interface StatusPillProps {
+  active: boolean;
+}
+
+function StatusPill({ active }: StatusPillProps) {
+  return active ? (
+    <span
+      className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full"
+      style={{
+        backgroundColor: "#f0fdf4",
+        color: "#16a34a",
+        border: "1px solid #bbf7d0",
+      }}
+    >
+      <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
+      Active
+    </span>
+  ) : (
+    <span
+      className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full"
+      style={{
+        backgroundColor: "#fafafa",
+        color: "#a1a1aa",
+        border: `1px solid ${themeColors.border}`,
+      }}
+    >
+      Completed
+    </span>
+  );
+}
+
 /* ── Page ───────────────────────── */
 
 export default function RidersPage() {
   const [riders, setRiders] = useState<Rider[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Pagination state
   const [pagination, setPagination] = useState({
     total: 0,
     page: 1,
@@ -59,18 +120,15 @@ export default function RidersPage() {
     totalPages: 0,
   });
 
-  // Filter state
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  /* ── Debounce ── */
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(filters.searchValue), 500);
     return () => clearTimeout(t);
   }, [filters.searchValue]);
 
-  /* ── Fetch Data ── */
   const fetchRiders = useCallback(
     async (page: number) => {
       setLoading(true);
@@ -100,11 +158,9 @@ export default function RidersPage() {
   );
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchRiders(1);
   }, [fetchRiders]);
 
-  /* ── Callbacks ── */
   const handleFilterChange = useCallback(
     <K extends keyof FilterState>(key: K, value: FilterState[K]) => {
       setFilters((prev) => ({ ...prev, [key]: value }));
@@ -112,13 +168,10 @@ export default function RidersPage() {
     [],
   );
 
-  /* ── CSV Export ── */
   const downloadCSV = async () => {
-    // For CSV, we might want all data, but for now we'll export current view
-    // Or we could fetch all data without pagination for export
     try {
       const params = new URLSearchParams({
-        limit: "1000", // Fetch a large amount for CSV
+        limit: "1000",
         search: debouncedSearch,
         status: filters.statusFilter,
         dateRange: filters.dateFilter,
@@ -171,10 +224,8 @@ export default function RidersPage() {
     return count;
   }, [filters]);
 
-  /* ── UI ── */
-
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+    <div className="p-1 space-y-6 max-w-full mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
@@ -193,7 +244,7 @@ export default function RidersPage() {
         </div>
         <button
           onClick={downloadCSV}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all text-white cursor-pointer hover:opacity-90 active:scale-95"
+          className="flex items-center gap-2 cursor-pointer px-5 py-2.5 rounded-xl text-sm font-bold transition-opacity text-white hover:opacity-90 active:scale-95"
           style={{ backgroundColor: themeColors.primary }}
         >
           <Download size={18} />
@@ -255,8 +306,11 @@ export default function RidersPage() {
       {/* Content Section */}
       {loading ? (
         <div
-          className="flex flex-col items-center justify-center py-32 rounded-2xl border bg-white/50"
-          style={{ borderColor: themeColors.border }}
+          className="flex flex-col items-center justify-center py-32 rounded-2xl border"
+          style={{
+            borderColor: themeColors.border,
+            backgroundColor: themeColors.cardBackground,
+          }}
         >
           <Loader2
             className="w-8 h-8 animate-spin"
@@ -271,34 +325,33 @@ export default function RidersPage() {
         </div>
       ) : (
         <div
-          className="border rounded-2xl overflow-hidden"
+          className="rounded-2xl border overflow-hidden"
           style={{
             borderColor: themeColors.border,
             backgroundColor: themeColors.cardBackground,
           }}
         >
-          {/* Desktop View (Table) */}
+          {/* ── Desktop Table ── */}
           <div className="hidden md:block overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-sm border-collapse">
               <thead>
-                <tr
-                  style={{
-                    backgroundColor: themeColors.background,
-                    borderBottom: `1px solid ${themeColors.border}`,
-                  }}
-                >
+                <tr style={{ backgroundColor: themeColors.background }}>
                   {[
                     "FE ID",
-                    "Rider Info",
+                    "Rider",
                     "Token",
                     "Check In",
                     "Check Out",
                     "Duration",
+                    "Status",
                   ].map((h) => (
                     <th
                       key={h}
-                      className="p-4 text-left font-bold uppercase tracking-wider text-[10px]"
-                      style={{ color: themeColors.textSecondary }}
+                      className="px-5 py-3.5 text-left text-[11px] font-bold uppercase tracking-widest"
+                      style={{
+                        color: themeColors.textSecondary,
+                        borderBottom: `1.5px solid ${themeColors.border}`,
+                      }}
                     >
                       {h}
                     </th>
@@ -307,26 +360,296 @@ export default function RidersPage() {
               </thead>
 
               <tbody>
-                {riders.map((r, index) => {
-                  const inT = formatDateTime(r.createdAt);
-                  const outT = r.checkedOutAt
-                    ? formatDateTime(r.checkedOutAt)
-                    : null;
-
-                  return (
-                    <tr
-                      key={r._id}
-                      style={{
-                        borderBottom:
-                          index !== riders.length - 1
-                            ? `1px solid ${themeColors.border}`
-                            : "none",
-                      }}
-                      className="hover:bg-zinc-50 transition-colors"
+                {riders.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={7}
+                      className="px-5 py-16 text-center text-sm font-medium"
+                      style={{ color: themeColors.textSecondary }}
                     >
-                      <td className="p-4">
+                      No riders found.
+                    </td>
+                  </tr>
+                ) : (
+                  riders.map((r, index) => {
+                    const inT = formatDateTime(r.createdAt);
+                    const outT = r.checkedOutAt
+                      ? formatDateTime(r.checkedOutAt)
+                      : null;
+                    const isLast = index === riders.length - 1;
+
+                    return (
+                      <tr
+                        key={r._id}
+                        className="transition-colors"
+                        style={{
+                          borderBottom: isLast
+                            ? "none"
+                            : `1px solid ${themeColors.border}`,
+                        }}
+                        onMouseEnter={(e) => {
+                          (
+                            e.currentTarget as HTMLTableRowElement
+                          ).style.backgroundColor = themeColors.background;
+                        }}
+                        onMouseLeave={(e) => {
+                          (
+                            e.currentTarget as HTMLTableRowElement
+                          ).style.backgroundColor = "transparent";
+                        }}
+                      >
+                        {/* FE ID */}
+                        <td className="px-5 py-4">
+                          <span
+                            className="font-mono text-[11px] font-bold px-2 py-1 rounded-md border"
+                            style={{
+                              backgroundColor: themeColors.background,
+                              borderColor: themeColors.border,
+                              color: themeColors.primary,
+                              letterSpacing: "0.04em",
+                            }}
+                          >
+                            {r.feId}
+                          </span>
+                        </td>
+
+                        {/* Rider Info */}
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-3">
+                            <div
+                              className="w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-black flex-shrink-0"
+                              style={{
+                                backgroundColor: themeColors.primary + "12",
+                                color: themeColors.primary,
+                              }}
+                            >
+                              {r.fullName.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="min-w-0">
+                              <p
+                                className="font-semibold text-sm truncate"
+                                style={{ color: themeColors.textPrimary }}
+                              >
+                                {r.fullName}
+                              </p>
+                              <p
+                                className="text-[12px] font-medium tabular-nums"
+                                style={{ color: themeColors.textSecondary }}
+                              >
+                                {r.phone}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Token */}
+                        <td className="px-5 py-4">
+                          <span
+                            className="text-sm font-black tabular-nums"
+                            style={{ color: "#f97316" }}
+                          >
+                            #{r.token}
+                          </span>
+                        </td>
+
+                        {/* Check In */}
+                        <td className="px-5 py-4">
+                          <TimeBlock dateStr={inT.date} timeStr={inT.time} />
+                        </td>
+
+                        {/* Check Out */}
+                        <td className="px-5 py-4">
+                          {outT ? (
+                            <TimeBlock
+                              dateStr={outT.date}
+                              timeStr={outT.time}
+                            />
+                          ) : (
+                            <span
+                              className="text-[11px] font-semibold"
+                              style={{ color: themeColors.textSecondary }}
+                            >
+                              —
+                            </span>
+                          )}
+                        </td>
+
+                        {/* Duration */}
+                        <td className="px-5 py-4">
+                          {r.checkedOutAt ? (
+                            <span
+                              className="inline-flex items-center gap-1 text-[12px] font-semibold tabular-nums"
+                              style={{ color: themeColors.textPrimary }}
+                            >
+                              <Clock
+                                size={12}
+                                style={{ color: themeColors.textSecondary }}
+                              />
+                              {getDurationMinutes(r.createdAt, r.checkedOutAt)}
+                            </span>
+                          ) : (
+                            <span
+                              className="text-[12px]"
+                              style={{ color: themeColors.textSecondary }}
+                            >
+                              —
+                            </span>
+                          )}
+                        </td>
+
+                        {/* Status */}
+                        <td className="px-5 py-4">
+                          <StatusPill active={!r.checkedOutAt} />
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* ── Mobile Cards ── */}
+          <div className="md:hidden">
+            {riders.length === 0 ? (
+              <div
+                className="py-16 text-center text-sm font-medium"
+                style={{ color: themeColors.textSecondary }}
+              >
+                No riders found.
+              </div>
+            ) : (
+              riders.map((r, index) => {
+                const inT = formatDateTime(r.createdAt);
+                const outT = r.checkedOutAt
+                  ? formatDateTime(r.checkedOutAt)
+                  : null;
+                const isLast = index === riders.length - 1;
+
+                return (
+                  <div
+                    key={r._id}
+                    style={{
+                      borderBottom: isLast
+                        ? "none"
+                        : `1px solid ${themeColors.border}`,
+                    }}
+                  >
+                    <div className="p-4 space-y-3">
+                      {/* Top row: avatar + name + token */}
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div
+                            className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-black flex-shrink-0"
+                            style={{
+                              backgroundColor: themeColors.primary + "12",
+                              color: themeColors.primary,
+                            }}
+                          >
+                            {r.fullName.charAt(0).toUpperCase()}
+                          </div>
+                          <div className="min-w-0">
+                            <p
+                              className="font-semibold text-sm truncate"
+                              style={{ color: themeColors.textPrimary }}
+                            >
+                              {r.fullName}
+                            </p>
+                            <p
+                              className="text-[12px]"
+                              style={{ color: themeColors.textSecondary }}
+                            >
+                              {r.phone}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                          <span className="text-sm font-black text-orange-500">
+                            #{r.token}
+                          </span>
+                          <StatusPill active={!r.checkedOutAt} />
+                        </div>
+                      </div>
+
+                      {/* Time row */}
+                      <div
+                        className="flex items-center gap-2 p-3 rounded-xl"
+                        style={{
+                          backgroundColor: themeColors.background,
+                          border: `1px solid ${themeColors.border}`,
+                        }}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p
+                            className="text-[10px] font-bold uppercase tracking-widest mb-1"
+                            style={{ color: themeColors.textSecondary }}
+                          >
+                            Check In
+                          </p>
+                          <TimeBlock dateStr={inT.date} timeStr={inT.time} />
+                        </div>
+
+                        <ArrowRight
+                          size={14}
+                          style={{
+                            color: themeColors.textSecondary,
+                            flexShrink: 0,
+                          }}
+                        />
+
+                        <div className="flex-1 min-w-0">
+                          <p
+                            className="text-[10px] font-bold uppercase tracking-widest mb-1"
+                            style={{ color: themeColors.textSecondary }}
+                          >
+                            Check Out
+                          </p>
+                          {outT ? (
+                            <TimeBlock
+                              dateStr={outT.date}
+                              timeStr={outT.time}
+                            />
+                          ) : (
+                            <span
+                              className="text-sm font-semibold"
+                              style={{ color: themeColors.textSecondary }}
+                            >
+                              Pending
+                            </span>
+                          )}
+                        </div>
+
+                        {r.checkedOutAt && (
+                          <>
+                            <div
+                              className="w-px self-stretch"
+                              style={{ backgroundColor: themeColors.border }}
+                            />
+                            <div className="flex-shrink-0 text-center">
+                              <p
+                                className="text-[10px] font-bold uppercase tracking-widest mb-1"
+                                style={{ color: themeColors.textSecondary }}
+                              >
+                                Duration
+                              </p>
+                              <span
+                                className="text-sm font-bold tabular-nums"
+                                style={{ color: themeColors.textPrimary }}
+                              >
+                                {getDurationMinutes(
+                                  r.createdAt,
+                                  r.checkedOutAt,
+                                )}
+                              </span>
+                            </div>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Footer: FE ID */}
+                      <div className="flex items-center justify-between">
                         <span
-                          className="font-mono text-[11px] font-bold px-2.5 py-1 rounded-lg border"
+                          className="font-mono text-[10px] font-bold px-2 py-0.5 rounded border"
                           style={{
                             backgroundColor: themeColors.background,
                             borderColor: themeColors.border,
@@ -335,202 +658,19 @@ export default function RidersPage() {
                         >
                           {r.feId}
                         </span>
-                      </td>
-                      <td className="p-4">
-                        <div className="flex flex-col">
-                          <span
-                            className="font-bold text-sm"
-                            style={{ color: themeColors.textPrimary }}
-                          >
-                            {r.fullName}
-                          </span>
-                          <span
-                            className="text-xs"
-                            style={{ color: themeColors.textSecondary }}
-                          >
-                            {r.phone}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <span className="font-black text-orange-500 tabular-nums">
-                          #{r.token}
-                        </span>
-                      </td>
-
-                      <td className="p-4">
-                        <div className="flex flex-col">
-                          <span
-                            className="font-bold"
-                            style={{ color: themeColors.textPrimary }}
-                          >
-                            {inT.time}
-                          </span>
-                          <span
-                            className="text-[10px] uppercase font-semibold"
-                            style={{ color: themeColors.textSecondary }}
-                          >
-                            {inT.date}
-                          </span>
-                        </div>
-                      </td>
-
-                      <td className="p-4">
-                        {outT ? (
-                          <div className="flex flex-col">
-                            <span
-                              className="font-bold"
-                              style={{ color: themeColors.textPrimary }}
-                            >
-                              {outT.time}
-                            </span>
-                            <span
-                              className="text-[10px] uppercase font-semibold"
-                              style={{ color: themeColors.textSecondary }}
-                            >
-                              {outT.date}
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="text-[10px] font-bold uppercase px-2 py-1 rounded-md bg-zinc-100 text-zinc-400">
-                            In Progress
-                          </span>
-                        )}
-                      </td>
-
-                      <td
-                        className="p-4 font-bold"
-                        style={{ color: themeColors.textPrimary }}
-                      >
-                        {getDurationMinutes(r.createdAt, r.checkedOutAt)}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
 
-          {/* Mobile View (Cards) */}
+          {/* ── Pagination ── */}
           <div
-            className="md:hidden divide-y"
-            style={{ borderColor: themeColors.border }}
-          >
-            {riders.map((r) => {
-              const inT = formatDateTime(r.createdAt);
-              const outT = r.checkedOutAt
-                ? formatDateTime(r.checkedOutAt)
-                : null;
-
-              return (
-                <div key={r._id} className="p-4 space-y-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p
-                        className="font-bold text-base truncate"
-                        style={{ color: themeColors.textPrimary }}
-                      >
-                        {r.fullName}
-                      </p>
-                      <p
-                        className="text-sm"
-                        style={{ color: themeColors.textSecondary }}
-                      >
-                        {r.phone}
-                      </p>
-                    </div>
-                    <span className="font-black text-orange-500 flex-shrink-0">
-                      #{r.token}
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4 pt-2">
-                    <div className="space-y-1">
-                      <p
-                        className="text-[10px] font-bold uppercase tracking-widest"
-                        style={{ color: themeColors.textSecondary }}
-                      >
-                        Check In
-                      </p>
-                      <p
-                        className="text-sm font-bold"
-                        style={{ color: themeColors.textPrimary }}
-                      >
-                        {inT.time}
-                      </p>
-                      <p
-                        className="text-[10px]"
-                        style={{ color: themeColors.textSecondary }}
-                      >
-                        {inT.date}
-                      </p>
-                    </div>
-                    <div className="space-y-1">
-                      <p
-                        className="text-[10px] font-bold uppercase tracking-widest"
-                        style={{ color: themeColors.textSecondary }}
-                      >
-                        Check Out
-                      </p>
-                      {outT ? (
-                        <>
-                          <p
-                            className="text-sm font-bold"
-                            style={{ color: themeColors.textPrimary }}
-                          >
-                            {outT.time}
-                          </p>
-                          <p
-                            className="text-[10px]"
-                            style={{ color: themeColors.textSecondary }}
-                          >
-                            {outT.date}
-                          </p>
-                        </>
-                      ) : (
-                        <p className="text-sm font-bold text-zinc-400">
-                          Pending
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-2">
-                    <span
-                      className="font-mono text-[10px] font-bold px-2 py-0.5 rounded border"
-                      style={{
-                        backgroundColor: themeColors.background,
-                        borderColor: themeColors.border,
-                        color: themeColors.primary,
-                      }}
-                    >
-                      {r.feId}
-                    </span>
-                    <div className="flex items-center gap-1.5">
-                      <span
-                        className="text-[10px] font-bold uppercase"
-                        style={{ color: themeColors.textSecondary }}
-                      >
-                        Duration:
-                      </span>
-                      <span
-                        className="text-sm font-bold"
-                        style={{ color: themeColors.textPrimary }}
-                      >
-                        {getDurationMinutes(r.createdAt, r.checkedOutAt)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Pagination Footer */}
-          <div
-            className="p-4 border-t flex flex-col sm:flex-row items-center justify-between gap-4"
+            className="px-5 py-4 flex flex-col sm:flex-row items-center justify-between gap-3"
             style={{
-              borderColor: themeColors.border,
+              borderTop: `1px solid ${themeColors.border}`,
               backgroundColor: themeColors.background,
             }}
           >
@@ -540,14 +680,15 @@ export default function RidersPage() {
             >
               Showing{" "}
               <span
-                className="font-black"
+                className="font-bold"
                 style={{ color: themeColors.textPrimary }}
               >
-                {riders.length}
+                {(pagination.page - 1) * pagination.limit + 1}–
+                {Math.min(pagination.page * pagination.limit, pagination.total)}
               </span>{" "}
               of{" "}
               <span
-                className="font-black"
+                className="font-bold"
                 style={{ color: themeColors.textPrimary }}
               >
                 {pagination.total}
@@ -559,17 +700,19 @@ export default function RidersPage() {
               <button
                 disabled={pagination.page === 1}
                 onClick={() => fetchRiders(pagination.page - 1)}
-                className="px-4 py-2 rounded-xl border text-xs font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer hover:bg-white"
+                className="px-4 py-1.5 rounded-lg border text-xs font-semibold transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 style={{
                   borderColor: themeColors.border,
                   color: themeColors.textPrimary,
+                  backgroundColor: themeColors.cardBackground,
                 }}
               >
                 Previous
               </button>
-              <div className="flex items-center gap-1 mx-2">
+
+              <div className="flex items-center gap-1 px-2">
                 <span
-                  className="text-xs font-bold"
+                  className="text-xs font-bold tabular-nums"
                   style={{ color: themeColors.textPrimary }}
                 >
                   {pagination.page}
@@ -581,19 +724,21 @@ export default function RidersPage() {
                   /
                 </span>
                 <span
-                  className="text-xs"
+                  className="text-xs tabular-nums"
                   style={{ color: themeColors.textSecondary }}
                 >
                   {pagination.totalPages}
                 </span>
               </div>
+
               <button
                 disabled={pagination.page === pagination.totalPages}
                 onClick={() => fetchRiders(pagination.page + 1)}
-                className="px-4 py-2 rounded-xl border text-xs font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer hover:bg-white"
+                className="px-4 py-1.5 rounded-lg border text-xs font-semibold transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 style={{
                   borderColor: themeColors.border,
                   color: themeColors.textPrimary,
+                  backgroundColor: themeColors.cardBackground,
                 }}
               >
                 Next
