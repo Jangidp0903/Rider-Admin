@@ -8,6 +8,7 @@ import {
   ArrowUpDown,
   X,
   SlidersHorizontal,
+  MapPin,
 } from "lucide-react";
 import { themeColors } from "@/lib/themeColors";
 import CustomSelect from "./CustomSelect";
@@ -25,6 +26,7 @@ const DEFAULT_FILTERS: FilterState = {
   dateFilter: "all",
   customDateRange: { from: "", to: "" },
   sortOrder: "latest",
+  hubFilter: "all",
 };
 
 /* ── Filter Content (shared between desktop panel and mobile modal) ── */
@@ -53,7 +55,7 @@ function FilterContent({
       {!hideSearch && (
         <div className="space-y-1">
           <p
-            className="text-xs font-bold uppercase tracking-wider"
+            className="text-[10px] font-bold uppercase tracking-wider"
             style={{ color: themeColors.textSecondary }}
           >
             Search
@@ -70,7 +72,7 @@ function FilterContent({
               placeholder="Name, phone or FE ID…"
               value={filters.searchValue}
               onChange={(e) => onChange("searchValue", e.target.value)}
-              className="w-full pl-9 pr-4 py-2.5 rounded-xl border outline-none text-sm font-medium transition-all focus:ring-4 focus:ring-blue-500/10"
+              className="w-full pl-9 pr-4 py-2 rounded-lg border outline-none text-[13px] font-medium transition-all focus:ring-4 focus:ring-blue-500/10"
               style={{
                 borderColor: themeColors.border,
                 backgroundColor: themeColors.background,
@@ -80,6 +82,26 @@ function FilterContent({
           </div>
         </div>
       )}
+
+      {/* Hub Filter */}
+      <CustomSelect
+        label="Select Hub"
+        icon={<MapPin size={14} />}
+        value={filters.hubFilter}
+        onChange={(v) => onChange("hubFilter", v)}
+        options={[
+          { label: "All Hubs", value: "all" },
+          { label: "Lawrence road", value: "Lawrence road" },
+          { label: "Uttam Nagar", value: "Uttam Nagar" },
+          {
+            label: "Peeragarhi",
+            value: "Peeragarhi",
+          },
+          { label: "Lado Sarai", value: "Lado Sarai" },
+          { label: "Okhla", value: "Okhla" },
+          { label: "Noida 73", value: "Noida 73" },
+        ]}
+      />
 
       {/* Row: Status + Sort */}
       <div className="grid grid-cols-2 gap-4">
@@ -127,7 +149,7 @@ function FilterContent({
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
             <p
-              className="text-xs font-bold uppercase tracking-wider"
+              className="text-[10px] font-bold uppercase tracking-wider"
               style={{ color: themeColors.textSecondary }}
             >
               From
@@ -141,7 +163,7 @@ function FilterContent({
                   from: e.target.value,
                 })
               }
-              className="w-full px-3 py-2.5 rounded-xl border text-sm outline-none"
+              className="w-full px-2 py-2 rounded-lg border text-[13px] outline-none"
               style={{
                 borderColor: themeColors.border,
                 backgroundColor: themeColors.background,
@@ -151,7 +173,7 @@ function FilterContent({
           </div>
           <div className="space-y-1">
             <p
-              className="text-xs font-bold uppercase tracking-wider"
+              className="text-[10px] font-bold uppercase tracking-wider"
               style={{ color: themeColors.textSecondary }}
             >
               To
@@ -165,7 +187,7 @@ function FilterContent({
                   to: e.target.value,
                 })
               }
-              className="w-full px-3 py-2.5 rounded-xl border text-sm outline-none"
+              className="w-full px-2 py-2 rounded-lg border text-[13px] outline-none"
               style={{
                 borderColor: themeColors.border,
                 backgroundColor: themeColors.background,
@@ -180,14 +202,14 @@ function FilterContent({
       {hasActiveFilters && (
         <button
           onClick={onReset}
-          className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border text-sm font-semibold transition-colors cursor-pointer"
+          className="w-full flex items-center justify-center gap-2 py-1.5 rounded-lg border text-xs font-semibold transition-colors cursor-pointer"
           style={{
             borderColor: themeColors.border,
             color: themeColors.textSecondary,
             backgroundColor: themeColors.background,
           }}
         >
-          <X size={14} />
+          <X size={12} />
           Reset all filters
         </button>
       )}
@@ -236,19 +258,30 @@ export default function FilterDrawer({
     return (
       tempFilters.statusFilter !== "all" ||
       tempFilters.dateFilter !== "all" ||
-      tempFilters.sortOrder !== "latest"
+      tempFilters.sortOrder !== "latest" ||
+      tempFilters.hubFilter !== "all"
     );
   }, [tempFilters]);
 
   // Prevent body scroll when open
   useEffect(() => {
     if (isOpen) {
+      document.documentElement.style.overflow = "hidden";
       document.body.style.overflow = "hidden";
+      document.body.style.paddingRight = "0px";
+      // Sync background to hide any leaks
+      document.documentElement.style.backgroundColor = "rgba(0,0,0,0.4)";
     } else {
+      document.documentElement.style.overflow = "";
       document.body.style.overflow = "";
+      document.body.style.paddingRight = "";
+      document.documentElement.style.backgroundColor = "";
     }
     return () => {
+      document.documentElement.style.overflow = "";
       document.body.style.overflow = "";
+      document.body.style.paddingRight = "";
+      document.documentElement.style.backgroundColor = "";
     };
   }, [isOpen]);
 
@@ -256,16 +289,14 @@ export default function FilterDrawer({
 
   return (
     <>
-      {/* Backdrop */}
       <div
-        className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm transition-opacity duration-300"
+        className="fixed -inset-1 z-[999] bg-black/40 backdrop-blur-sm transition-opacity duration-300 h-[101dvh]"
         onClick={onClose}
         style={{ animation: "fadeIn 0.2s ease" }}
       />
 
-      {/* Side Drawer */}
       <div
-        className="fixed top-0 right-0 bottom-0 z-50 w-full max-w-sm overflow-hidden"
+        className="fixed top-0 right-0 bottom-0 z-[1000] w-full max-w-sm overflow-hidden h-[100dvh]"
         style={{
           backgroundColor: themeColors.cardBackground,
           animation: "slideInRight 0.3s cubic-bezier(0.32, 0.72, 0, 1)",
@@ -275,23 +306,23 @@ export default function FilterDrawer({
       >
         {/* Header */}
         <div
-          className="flex items-center justify-between px-6 py-5 border-b flex-shrink-0"
+          className="flex items-center justify-between px-4 py-3 border-b flex-shrink-0"
           style={{ borderColor: themeColors.border }}
         >
           <div className="flex items-center gap-2">
             <SlidersHorizontal
-              size={18}
+              size={16}
               style={{ color: themeColors.primary }}
             />
             <span
-              className="text-lg font-black"
+              className="text-base font-bold"
               style={{ color: themeColors.textPrimary }}
             >
               Filter Options
             </span>
             {activeFilterCount > 0 && (
               <span
-                className="px-2 py-0.5 rounded-full text-xs font-black"
+                className="px-1.5 py-0.5 rounded-full text-[10px] font-black"
                 style={{
                   backgroundColor: themeColors.primary,
                   color: "#fff",
@@ -303,15 +334,15 @@ export default function FilterDrawer({
           </div>
           <button
             onClick={onClose}
-            className="w-10 h-10 rounded-xl flex items-center cursor-pointer justify-center transition-colors hover:bg-zinc-100"
+            className="w-8 h-8 rounded-lg flex items-center cursor-pointer justify-center transition-colors hover:bg-zinc-100"
             style={{ backgroundColor: themeColors.background }}
           >
-            <X size={20} style={{ color: themeColors.textSecondary }} />
+            <X size={18} style={{ color: themeColors.textSecondary }} />
           </button>
         </div>
 
         {/* Scrollable Content */}
-        <div className="overflow-y-auto flex-1 px-6 py-6">
+        <div className="overflow-y-auto flex-1 px-4 py-4">
           <FilterContent
             filters={tempFilters}
             onChange={handleTempChange}
@@ -323,12 +354,15 @@ export default function FilterDrawer({
 
         {/* Footer */}
         <div
-          className="px-6 py-6 border-t flex-shrink-0 flex gap-3"
-          style={{ borderColor: themeColors.border }}
+          className="px-4 py-3 border-t flex-shrink-0 flex gap-2"
+          style={{
+            borderColor: themeColors.border,
+            backgroundColor: themeColors.cardBackground,
+          }}
         >
           <button
             onClick={() => onApply(tempFilters)}
-            className="flex-[2] py-3 rounded-xl text-sm font-bold text-white cursor-pointer transition-transform hover:scale-[1.02] active:scale-[0.98]"
+            className="flex-1 py-2 rounded-lg text-xs font-bold text-white cursor-pointer transition-transform hover:scale-[1.01] active:scale-[0.99]"
             style={{ backgroundColor: themeColors.primary }}
           >
             Apply Filters

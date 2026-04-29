@@ -38,7 +38,7 @@ export default function CustomSelect({
     >
       {label && (
         <p
-          className="text-[10px] font-black uppercase tracking-widest px-1"
+          className="text-[9px] font-bold uppercase tracking-widest px-1"
           style={{ color: themeColors.textSecondary }}
         >
           {label}
@@ -47,7 +47,7 @@ export default function CustomSelect({
       <div className="relative">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl border text-sm font-bold transition-all hover:bg-zinc-50/50 cursor-pointer"
+          className="w-full flex items-center gap-2 px-3 py-2 rounded-xl border text-[13px] font-semibold transition-all hover:bg-zinc-50/50 cursor-pointer"
           style={{
             borderColor: themeColors.border,
             backgroundColor: themeColors.background,
@@ -59,7 +59,7 @@ export default function CustomSelect({
             {selectedOption.label}
           </span>
           <ChevronDown
-            size={14}
+            size={12}
             className={`transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
             style={{ color: themeColors.textSecondary }}
           />
@@ -67,7 +67,7 @@ export default function CustomSelect({
 
         {isOpen && (
           <div
-            className="absolute z-[60] top-full mt-2 left-0 right-0 py-2 rounded-2xl border animate-in fade-in slide-in-from-top-2"
+            className="absolute z-[60] top-full mt-1.5 left-0 right-0 py-1.5 rounded-xl border animate-in fade-in slide-in-from-top-1"
             style={{
               backgroundColor: themeColors.cardBackground,
               borderColor: themeColors.border,
@@ -80,7 +80,7 @@ export default function CustomSelect({
                   onChange(opt.value);
                   setIsOpen(false);
                 }}
-                className="w-full flex items-center px-4 py-2.5 text-sm font-bold transition-colors hover:bg-zinc-50 cursor-pointer"
+                className="w-full flex items-center px-3 py-1.5 text-[13px] font-semibold transition-colors hover:bg-zinc-50 cursor-pointer"
                 style={{
                   color:
                     opt.value === value

@@ -55,7 +55,7 @@ const Sidebar = ({
                 className="text-xl font-bold tracking-wide"
                 style={{ color: themeColors.textPrimary }}
               >
-                Zomato
+                Bike Rentals
               </h2>
             </div>
           )}

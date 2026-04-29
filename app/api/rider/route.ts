@@ -5,11 +5,11 @@ import Rider from "@/models/Rider";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { feId, fullName, phone } = body;
+    const { feId, fullName, phone, hubName } = body;
 
-    if (!feId || !fullName || !phone) {
+    if (!feId || !fullName || !phone || !hubName) {
       return NextResponse.json(
-        { error: "feId, fullName, phone are required." },
+        { error: "feId, fullName, phone and hubName are required." },
         { status: 400 },
       );
     }
@@ -60,6 +60,7 @@ export async function POST(req: Request) {
       feId,
       fullName,
       phone,
+      hubName,
       token,
     });
 
@@ -85,6 +86,7 @@ export async function GET(req: Request) {
     const search = searchParams.get("search") || "";
     const status = searchParams.get("status") || "all";
     const dateRange = searchParams.get("dateRange") || "all";
+    const hub = searchParams.get("hub") || "all";
     const from = searchParams.get("from");
     const to = searchParams.get("to");
 
@@ -107,6 +109,11 @@ export async function GET(req: Request) {
       query.checkedOutAt = null;
     } else if (status === "checked-out") {
       query.checkedOutAt = { $ne: null };
+    }
+
+    // Hub Filter
+    if (hub !== "all") {
+      query.hubName = hub;
     }
 
     // Date
@@ -134,10 +141,17 @@ export async function GET(req: Request) {
       }
     }
 
+    const sortParam = searchParams.get("sort") || "latest";
+    let sortQuery: any = { createdAt: -1 };
+
+    if (sortParam === "oldest") {
+      sortQuery = { createdAt: 1 };
+    }
+
     const skip = (page - 1) * limit;
 
     const [riders, total] = await Promise.all([
-      Rider.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      Rider.find(query).sort(sortQuery).skip(skip).limit(limit),
       Rider.countDocuments(query),
     ]);
 
