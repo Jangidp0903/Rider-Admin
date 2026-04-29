@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Lock, Mail, Eye, EyeOff, Shield } from "lucide-react";
 import apiClient from "@/lib/apiClient";
 import { useToast } from "@/context/ToastContext";
+import { themeColors } from "@/lib/themeColors";
 
 export default function LoginPage() {
   const router = useRouter();
