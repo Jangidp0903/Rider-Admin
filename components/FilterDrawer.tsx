@@ -91,19 +91,15 @@ function FilterContent({
         onChange={(v) => onChange("hubFilter", v)}
         options={[
           { label: "All Hubs", value: "all" },
-          { label: "Delhi Okhla Hub", value: "Delhi Okhla Hub" },
-          { label: "Mumbai Andheri Hub", value: "Mumbai Andheri Hub" },
+          { label: "Lawrence road", value: "Lawrence road" },
+          { label: "Uttam Nagar", value: "Uttam Nagar" },
           {
-            label: "Bangalore Koramangala Hub",
-            value: "Bangalore Koramangala Hub",
+            label: "Peeragarhi",
+            value: "Peeragarhi",
           },
-          { label: "Chennai Adyar Hub", value: "Chennai Adyar Hub" },
-          { label: "Kolkata Salt Lake Hub", value: "Kolkata Salt Lake Hub" },
-          { label: "Pune Hinjewadi Hub", value: "Pune Hinjewadi Hub" },
-          {
-            label: "Hyderabad Gachibowli Hub",
-            value: "Hyderabad Gachibowli Hub",
-          },
+          { label: "Lado Sarai", value: "Lado Sarai" },
+          { label: "Okhla", value: "Okhla" },
+          { label: "Noida 73", value: "Noida 73" },
         ]}
       />
 
@@ -270,12 +266,22 @@ export default function FilterDrawer({
   // Prevent body scroll when open
   useEffect(() => {
     if (isOpen) {
+      document.documentElement.style.overflow = "hidden";
       document.body.style.overflow = "hidden";
+      document.body.style.paddingRight = "0px";
+      // Sync background to hide any leaks
+      document.documentElement.style.backgroundColor = "rgba(0,0,0,0.4)";
     } else {
+      document.documentElement.style.overflow = "";
       document.body.style.overflow = "";
+      document.body.style.paddingRight = "";
+      document.documentElement.style.backgroundColor = "";
     }
     return () => {
+      document.documentElement.style.overflow = "";
       document.body.style.overflow = "";
+      document.body.style.paddingRight = "";
+      document.documentElement.style.backgroundColor = "";
     };
   }, [isOpen]);
 
@@ -283,16 +289,14 @@ export default function FilterDrawer({
 
   return (
     <>
-      {/* Backdrop */}
       <div
-        className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm transition-opacity duration-300"
+        className="fixed -inset-1 z-[999] bg-black/40 backdrop-blur-sm transition-opacity duration-300 h-[101dvh]"
         onClick={onClose}
         style={{ animation: "fadeIn 0.2s ease" }}
       />
 
-      {/* Side Drawer */}
       <div
-        className="fixed top-0 right-0 bottom-0 z-50 w-full max-w-sm overflow-hidden"
+        className="fixed top-0 right-0 bottom-0 z-[1000] w-full max-w-sm overflow-hidden h-[100dvh]"
         style={{
           backgroundColor: themeColors.cardBackground,
           animation: "slideInRight 0.3s cubic-bezier(0.32, 0.72, 0, 1)",
@@ -351,7 +355,10 @@ export default function FilterDrawer({
         {/* Footer */}
         <div
           className="px-6 py-6 border-t flex-shrink-0 flex gap-3"
-          style={{ borderColor: themeColors.border }}
+          style={{
+            borderColor: themeColors.border,
+            backgroundColor: themeColors.cardBackground,
+          }}
         >
           <button
             onClick={() => onApply(tempFilters)}
