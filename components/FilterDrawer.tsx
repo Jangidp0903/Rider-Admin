@@ -8,6 +8,7 @@ import {
   ArrowUpDown,
   X,
   SlidersHorizontal,
+  MapPin,
 } from "lucide-react";
 import { themeColors } from "@/lib/themeColors";
 import CustomSelect from "./CustomSelect";
@@ -25,6 +26,7 @@ const DEFAULT_FILTERS: FilterState = {
   dateFilter: "all",
   customDateRange: { from: "", to: "" },
   sortOrder: "latest",
+  hubFilter: "all",
 };
 
 /* ── Filter Content (shared between desktop panel and mobile modal) ── */
@@ -80,6 +82,30 @@ function FilterContent({
           </div>
         </div>
       )}
+
+      {/* Hub Filter */}
+      <CustomSelect
+        label="Select Hub"
+        icon={<MapPin size={14} />}
+        value={filters.hubFilter}
+        onChange={(v) => onChange("hubFilter", v)}
+        options={[
+          { label: "All Hubs", value: "all" },
+          { label: "Delhi Okhla Hub", value: "Delhi Okhla Hub" },
+          { label: "Mumbai Andheri Hub", value: "Mumbai Andheri Hub" },
+          {
+            label: "Bangalore Koramangala Hub",
+            value: "Bangalore Koramangala Hub",
+          },
+          { label: "Chennai Adyar Hub", value: "Chennai Adyar Hub" },
+          { label: "Kolkata Salt Lake Hub", value: "Kolkata Salt Lake Hub" },
+          { label: "Pune Hinjewadi Hub", value: "Pune Hinjewadi Hub" },
+          {
+            label: "Hyderabad Gachibowli Hub",
+            value: "Hyderabad Gachibowli Hub",
+          },
+        ]}
+      />
 
       {/* Row: Status + Sort */}
       <div className="grid grid-cols-2 gap-4">
@@ -236,7 +262,8 @@ export default function FilterDrawer({
     return (
       tempFilters.statusFilter !== "all" ||
       tempFilters.dateFilter !== "all" ||
-      tempFilters.sortOrder !== "latest"
+      tempFilters.sortOrder !== "latest" ||
+      tempFilters.hubFilter !== "all"
     );
   }, [tempFilters]);
 

@@ -48,6 +48,7 @@ const DEFAULT_FILTERS: FilterState = {
   dateFilter: "all",
   customDateRange: { from: "", to: "" },
   sortOrder: "latest",
+  hubFilter: "all",
 };
 
 /* ── Sub-components ─────────────── */
@@ -142,6 +143,7 @@ export default function RidersPage() {
           search: debouncedSearch,
           status: filters.statusFilter,
           dateRange: filters.dateFilter,
+          hub: filters.hubFilter,
           from: filters.customDateRange.from,
           to: filters.customDateRange.to,
         });
@@ -189,6 +191,7 @@ export default function RidersPage() {
         "Name",
         "Phone",
         "Token",
+        "Hub",
         "Check In",
         "Check Out",
         "Duration",
@@ -201,6 +204,7 @@ export default function RidersPage() {
           r.fullName,
           r.phone,
           r.token,
+          r.hubName,
           `${inT.date} ${inT.time}`,
           outT ? `${outT.date} ${outT.time}` : "-",
           getDurationMinutes(r.createdAt, r.checkedOutAt),
@@ -224,6 +228,7 @@ export default function RidersPage() {
     if (filters.searchValue) count++;
     if (filters.statusFilter !== "all") count++;
     if (filters.dateFilter !== "all") count++;
+    if (filters.hubFilter && filters.hubFilter !== "all") count++;
     return count;
   }, [filters]);
 
@@ -343,6 +348,7 @@ export default function RidersPage() {
                     "FE ID",
                     "Rider",
                     "Token",
+                    "Hub",
                     "Check In",
                     "Check Out",
                     "Duration",
@@ -452,6 +458,16 @@ export default function RidersPage() {
                             style={{ color: themeColors.primary }}
                           >
                             #{r.token}
+                          </span>
+                        </td>
+
+                        {/* Hub */}
+                        <td className="px-5 py-4">
+                          <span
+                            className="text-[12px] font-semibold"
+                            style={{ color: themeColors.textPrimary }}
+                          >
+                            {r.hubName}
                           </span>
                         </td>
 
@@ -572,6 +588,9 @@ export default function RidersPage() {
                             style={{ color: themeColors.primary }}
                           >
                             #{r.token}
+                          </span>
+                          <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-tighter">
+                            {r.hubName}
                           </span>
                           <StatusPill active={!r.checkedOutAt} />
                         </div>

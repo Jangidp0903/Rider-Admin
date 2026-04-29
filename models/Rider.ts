@@ -4,6 +4,7 @@ export interface IRider extends Document {
   feId: string;
   fullName: string;
   phone: string;
+  hubName: string;
   token: number;
   checkedOutAt?: Date;
   createdAt: Date;
@@ -21,6 +22,10 @@ const RiderSchema: Schema = new Schema(
       required: true,
     },
     phone: {
+      type: String,
+      required: true,
+    },
+    hubName: {
       type: String,
       required: true,
     },

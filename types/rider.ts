@@ -8,6 +8,7 @@ export interface FilterState {
   dateFilter: DateFilterType;
   customDateRange: { from: string; to: string };
   sortOrder: SortOrderType;
+  hubFilter: string;
 }
 
 export interface Rider {
@@ -15,6 +16,7 @@ export interface Rider {
   feId: string;
   fullName: string;
   phone: string;
+  hubName: string;
   token: number;
   checkedOutAt?: string | null;
   createdAt: string;
