@@ -72,14 +72,14 @@ function FilterContent({
       {/* Row: Status + Sort */}
       <div className="grid grid-cols-2 gap-4">
         <CustomSelect
-          label="Status"
+          label="Check-In Status"
           icon={<Filter size={14} />}
           value={filters.statusFilter}
           onChange={(v) => onChange("statusFilter", v as StatusFilterType)}
           options={[
-            { label: "All Status", value: "all" },
-            { label: "Checked In", value: "checked-in" },
-            { label: "Checked Out", value: "checked-out" },
+            { label: "All Records", value: "all" },
+            { label: "Check-In Only", value: "checked-in" },
+            { label: "Checked-Out", value: "checked-out" },
           ]}
         />
 

@@ -19,7 +19,7 @@ export async function proxy(request: NextRequest) {
     // Allow your frontend origin
     response.headers.set(
       "Access-Control-Allow-Origin",
-      "https://ev-zomato.vercel.app",
+      "https://ev-bikerentals.vercel.app",
     );
     response.headers.set(
       "Access-Control-Allow-Methods",

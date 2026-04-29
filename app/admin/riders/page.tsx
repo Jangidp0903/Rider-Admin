@@ -1,104 +1,46 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 import { themeColors } from "@/lib/themeColors";
 import {
   Loader2,
   Download,
   Search,
-  Users,
-  CheckCircle2,
-  LogOut,
   SlidersHorizontal,
 } from "lucide-react";
 
-import { 
-  Rider, 
-  FilterState, 
-} from "@/types/rider";
+import { Rider, FilterState } from "@/types/rider";
 import FilterDrawer from "@/components/FilterDrawer";
 
 /* ── Helpers ─────────────────────── */
 
-function formatDateTime(date: string): { date: string; time: string } {
+function formatDateTime(date: string) {
   const d = new Date(date);
-  const datePart = d.toLocaleDateString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-  const timePart = d.toLocaleTimeString("en-IN", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-  return { date: datePart, time: timePart };
+  return {
+    date: d.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }),
+    time: d.toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+    }),
+  };
 }
 
-/* ── Stat Card ───────────────────── */
+function getDurationMinutes(checkIn: string, checkOut?: string | null) {
+  if (!checkOut) return "-";
 
-interface StatCardProps {
-  label: string;
-  value: number | string;
-  icon: React.ReactNode;
-  accent: string;
+  const start = new Date(checkIn).getTime();
+  const end = new Date(checkOut).getTime();
+
+  const diff = Math.floor((end - start) / (1000 * 60));
+  return `${diff} min`;
 }
 
-function StatCard({ label, value, icon, accent }: StatCardProps) {
-  return (
-    <div
-      className="flex items-center gap-4 px-5 py-4 rounded-2xl border"
-      style={{
-        backgroundColor: themeColors.cardBackground,
-        borderColor: themeColors.border,
-      }}
-    >
-      <div
-        className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-        style={{ backgroundColor: accent + "18", color: accent }}
-      >
-        {icon}
-      </div>
-      <div className="min-w-0">
-        <p
-          className="text-xs font-semibold uppercase tracking-wider truncate"
-          style={{ color: themeColors.textSecondary }}
-        >
-          {label}
-        </p>
-        <p
-          className="text-xl font-black tabular-nums"
-          style={{ color: themeColors.textPrimary }}
-        >
-          {value}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-/* ── Status Badge ────────────────── */
-
-function StatusBadge({ status }: { status: Rider["status"] }) {
-  const isActive = status === "checked-in";
-  return (
-    <span
-      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold"
-      style={{
-        backgroundColor: isActive ? "#dcfce7" : "#f1f5f9",
-        color: isActive ? "#15803d" : "#64748b",
-      }}
-    >
-      <span
-        className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-        style={{ backgroundColor: isActive ? "#16a34a" : "#94a3b8" }}
-      />
-      {isActive ? "Checked In" : "Checked Out"}
-    </span>
-  );
-}
-
-/* ── Page ───────────────────────── */
+/* ── Constants ───────────────────── */
 
 const DEFAULT_FILTERS: FilterState = {
   searchValue: "",
@@ -108,50 +50,63 @@ const DEFAULT_FILTERS: FilterState = {
   sortOrder: "latest",
 };
 
+/* ── Page ───────────────────────── */
+
 export default function RidersPage() {
-  // Data state
   const [riders, setRiders] = useState<Rider[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  
+  // Pagination state
+  const [pagination, setPagination] = useState({
+    total: 0,
+    page: 1,
+    limit: 20,
+    totalPages: 0
+  });
 
-  // Filter state (unified)
+  // Filter state
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
   const [debouncedSearch, setDebouncedSearch] = useState("");
-
-  // Mobile filter modal
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  // Debounce search
+  /* ── Debounce ── */
   useEffect(() => {
-    const timer = setTimeout(
-      () => setDebouncedSearch(filters.searchValue),
-      300,
-    );
-    return () => clearTimeout(timer);
+    const t = setTimeout(() => setDebouncedSearch(filters.searchValue), 500);
+    return () => clearTimeout(t);
   }, [filters.searchValue]);
 
-  // Fetch data
-  useEffect(() => {
-    const fetchRiders = async () => {
-      try {
-        const res = await axios.get("/api/rider");
-        if (res.data.success) {
-          setRiders(res.data.data);
-        } else {
-          setError(res.data.error ?? "Failed to fetch riders");
-        }
-      } catch (err) {
-        console.error("Error fetching riders:", err);
-        const axiosError = err as AxiosError<{ error: string }>;
-        setError(axiosError.response?.data?.error ?? "An error occurred while fetching riders.");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchRiders();
-  }, []);
+  /* ── Fetch Data ── */
+  const fetchRiders = useCallback(async (page: number) => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: "20",
+        search: debouncedSearch,
+        status: filters.statusFilter,
+        dateRange: filters.dateFilter,
+        from: filters.customDateRange.from,
+        to: filters.customDateRange.to
+      });
 
-  // Unified filter change handler
+      const res = await axios.get(`/api/rider?${params.toString()}`);
+      if (res.data.success) {
+        setRiders(res.data.data);
+        setPagination(res.data.pagination);
+      }
+    } catch (err) {
+      console.error("Error fetching riders:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [debouncedSearch, filters]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchRiders(1);
+  }, [fetchRiders]);
+
+  /* ── Callbacks ── */
   const handleFilterChange = useCallback(
     <K extends keyof FilterState>(key: K, value: FilterState[K]) => {
       setFilters((prev) => ({ ...prev, [key]: value }));
@@ -159,21 +114,49 @@ export default function RidersPage() {
     [],
   );
 
-  const resetFilters = useCallback(() => {
-    setFilters(DEFAULT_FILTERS);
-  }, []);
+  /* ── CSV Export ── */
+  const downloadCSV = async () => {
+    // For CSV, we might want all data, but for now we'll export current view
+    // Or we could fetch all data without pagination for export
+    try {
+      const params = new URLSearchParams({
+        limit: "1000", // Fetch a large amount for CSV
+        search: debouncedSearch,
+        status: filters.statusFilter,
+        dateRange: filters.dateFilter,
+        from: filters.customDateRange.from,
+        to: filters.customDateRange.to
+      });
+      const res = await axios.get(`/api/rider?${params.toString()}`);
+      const allData: Rider[] = res.data.data;
 
-  // Stats
-  const stats = useMemo(() => {
-    const checkedIn = riders.filter((r) => r.status === "checked-in").length;
-    return {
-      total: riders.length,
-      checkedIn,
-      checkedOut: riders.length - checkedIn,
-    };
-  }, [riders]);
+      const headers = ["FE ID", "Name", "Phone", "Token", "Check In", "Check Out", "Duration"];
+      const rows = allData.map((r) => {
+        const inT = formatDateTime(r.createdAt);
+        const outT = r.checkedOutAt ? formatDateTime(r.checkedOutAt) : null;
+        return [
+          r.feId,
+          r.fullName,
+          r.phone,
+          r.token,
+          `${inT.date} ${inT.time}`,
+          outT ? `${outT.date} ${outT.time}` : "-",
+          getDurationMinutes(r.createdAt, r.checkedOutAt),
+        ];
+      });
 
-  // Active filter count (for badge)
+      const csv = [headers, ...rows].map((r) => r.join(",")).join("\n");
+      const blob = new Blob([csv]);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "riders_report.csv";
+      a.click();
+    } catch (e) {
+      console.error("Export failed", e);
+    }
+  };
+
   const activeFilterCount = useMemo(() => {
     let count = 0;
     if (filters.searchValue) count++;
@@ -182,497 +165,254 @@ export default function RidersPage() {
     return count;
   }, [filters]);
 
-  const hasActiveFilters = activeFilterCount > 0;
-
-  // Filtered & sorted data
-  const filteredRiders = useMemo(() => {
-    let result = [...riders];
-
-    if (debouncedSearch) {
-      const s = debouncedSearch.toLowerCase();
-      result = result.filter(
-        (r) =>
-          r.fullName.toLowerCase().includes(s) ||
-          r.phone.includes(s) ||
-          r.feId.toLowerCase().includes(s),
-      );
-    }
-
-    if (filters.statusFilter !== "all") {
-      result = result.filter((r) => r.status === filters.statusFilter);
-    }
-
-    if (filters.dateFilter !== "all") {
-      const now = new Date();
-      result = result.filter((r) => {
-        const rDate = new Date(r.createdAt);
-        if (filters.dateFilter === "today")
-          return rDate.toDateString() === now.toDateString();
-        if (filters.dateFilter === "yesterday") {
-          const yesterday = new Date();
-          yesterday.setDate(now.getDate() - 1);
-          return rDate.toDateString() === yesterday.toDateString();
-        }
-        if (filters.dateFilter === "last7") {
-          const sevenDaysAgo = new Date();
-          sevenDaysAgo.setDate(now.getDate() - 7);
-          return rDate >= sevenDaysAgo;
-        }
-        if (
-          filters.dateFilter === "custom" &&
-          filters.customDateRange.from &&
-          filters.customDateRange.to
-        ) {
-          const from = new Date(filters.customDateRange.from);
-          from.setHours(0, 0, 0, 0);
-          const to = new Date(filters.customDateRange.to);
-          to.setHours(23, 59, 59, 999);
-          return rDate >= from && rDate <= to;
-        }
-        return true;
-      });
-    }
-
-    result.sort((a, b) => {
-      const timeA = new Date(a.createdAt).getTime();
-      const timeB = new Date(b.createdAt).getTime();
-      return filters.sortOrder === "latest" ? timeB - timeA : timeA - timeB;
-    });
-
-    return result;
-  }, [riders, debouncedSearch, filters]);
-
-  // Export CSV
-  const downloadCSV = () => {
-    if (filteredRiders.length === 0) return;
-    const headers = [
-      "FE ID",
-      "Full Name",
-      "Phone",
-      "Token",
-      "Status",
-      "Date/Time",
-    ];
-    const rows = filteredRiders.map((rider) => {
-      const { date, time } = formatDateTime(rider.createdAt);
-      return [
-        `"${rider.feId}"`,
-        `"${rider.fullName}"`,
-        `"${rider.phone}"`,
-        `"${rider.token}"`,
-        `"${rider.status}"`,
-        `"${date}, ${time}"`,
-      ];
-    });
-    const csvContent = [
-      headers.join(","),
-      ...rows.map((row) => row.join(",")),
-    ].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute(
-      "download",
-      `riders_report_${new Date().toISOString().split("T")[0]}.csv`,
-    );
-    link.style.visibility = "hidden";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+  /* ── UI ── */
 
   return (
-    <div
-      className="min-h-screen w-full"
-      style={{ backgroundColor: themeColors.background }}
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-5 sm:space-y-6">
-        {/* ── Header ── */}
-        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-          <div>
-            <p
-              className="text-xs font-bold uppercase tracking-widest mb-1"
-              style={{ color: themeColors.primary }}
-            >
-              Dashboard
-            </p>
-            <h1
-              className="text-2xl sm:text-3xl font-black tracking-tight"
-              style={{ color: themeColors.textPrimary }}
-            >
-              Rider Management
-            </h1>
-            <p
-              className="text-sm mt-1"
-              style={{ color: themeColors.textSecondary }}
-            >
-              Track, filter, and manage all rider check-in records.
-            </p>
-          </div>
-          <button
-            onClick={downloadCSV}
-            disabled={filteredRiders.length === 0 || loading}
-            className="self-start sm:self-auto cursor-pointer flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-white flex-shrink-0"
-            style={{ backgroundColor: themeColors.primary }}
-          >
-            <Download className="w-4 h-4" />
-            Export CSV
-          </button>
+    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-black tracking-tight" style={{ color: themeColors.textPrimary }}>
+            Rider Management
+          </h1>
+          <p className="text-sm mt-1" style={{ color: themeColors.textSecondary }}>
+            Track and manage all rider registration records.
+          </p>
         </div>
-
-        {/* ── Stat Cards ── */}
-        {!loading && !error && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            <StatCard
-              label="Total Riders"
-              value={stats.total}
-              icon={<Users size={18} />}
-              accent={themeColors.primary}
-            />
-            <StatCard
-              label="Checked In"
-              value={stats.checkedIn}
-              icon={<CheckCircle2 size={18} />}
-              accent="#16a34a"
-            />
-            <StatCard
-              label="Checked Out"
-              value={stats.checkedOut}
-              icon={<LogOut size={18} />}
-              accent="#64748b"
-            />
-          </div>
-        )}
-
-        {/* ── Search & Filter Row ── */}
-        <div className="flex gap-3">
-          <div className="relative flex-1">
-            <span
-              className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none"
-              style={{ color: themeColors.textSecondary }}
-            >
-              <Search size={18} />
-            </span>
-            <input
-              type="text"
-              placeholder="Search by name, phone or FE ID…"
-              value={filters.searchValue}
-              onChange={(e) =>
-                handleFilterChange("searchValue", e.target.value)
-              }
-              className="w-full pl-11 pr-4 py-3 rounded-2xl border outline-none text-sm font-medium transition-all focus:ring-4 focus:ring-blue-500/10"
-              style={{
-                borderColor: themeColors.border,
-                backgroundColor: themeColors.cardBackground,
-                color: themeColors.textPrimary,
-              }}
-            />
-          </div>
-          {/* Filter Button */}
-          <button
-            onClick={() => setIsFilterOpen(true)}
-            className="relative flex-shrink-0 flex items-center gap-2 px-5 py-3 rounded-2xl border text-sm font-bold transition-all hover:translate-y-[-1px] cursor-pointer"
-            style={{
-              borderColor: hasActiveFilters
-                ? themeColors.primary
-                : themeColors.border,
-              backgroundColor: hasActiveFilters
-                ? themeColors.primary + "08"
-                : themeColors.cardBackground,
-              color: hasActiveFilters
-                ? themeColors.primary
-                : themeColors.textPrimary,
-            }}
-          >
-            <SlidersHorizontal size={18} />
-            <span className="hidden sm:inline">Filters</span>
-            {activeFilterCount > 0 && (
-              <span
-                className="w-5 h-5 rounded-full text-[10px] font-black flex items-center justify-center text-white"
-                style={{ backgroundColor: themeColors.primary }}
-              >
-                {activeFilterCount}
-              </span>
-            )}
-          </button>
-        </div>
-
-        {/* ── Content ── */}
-        {loading ? (
-          <div
-            className="flex flex-col justify-center items-center py-32 rounded-2xl border"
-            style={{
-              borderColor: themeColors.border,
-              backgroundColor: themeColors.cardBackground,
-            }}
-          >
-            <Loader2
-              className="w-7 h-7 animate-spin mb-3"
-              style={{ color: themeColors.primary }}
-            />
-            <span
-              className="text-sm font-medium"
-              style={{ color: themeColors.textSecondary }}
-            >
-              Loading rider data…
-            </span>
-          </div>
-        ) : error ? (
-          <div
-            className="text-center py-20 rounded-2xl border"
-            style={{ borderColor: "#fecaca", backgroundColor: "#fef2f2" }}
-          >
-            <p
-              className="font-bold text-base mb-1"
-              style={{ color: "#b91c1c" }}
-            >
-              Failed to load data
-            </p>
-            <p className="text-sm" style={{ color: "#ef4444" }}>
-              {error}
-            </p>
-          </div>
-        ) : filteredRiders.length === 0 ? (
-          <div
-            className="flex flex-col items-center justify-center py-28 rounded-2xl border"
-            style={{
-              borderColor: themeColors.border,
-              backgroundColor: themeColors.cardBackground,
-            }}
-          >
-            <div
-              className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
-              style={{ backgroundColor: themeColors.background }}
-            >
-              <Search size={24} style={{ color: themeColors.textSecondary }} />
-            </div>
-            <p
-              className="text-base font-bold mb-1"
-              style={{ color: themeColors.textPrimary }}
-            >
-              No riders found
-            </p>
-            <p
-              className="text-sm text-center max-w-xs"
-              style={{ color: themeColors.textSecondary }}
-            >
-              No records match your current filters. Try adjusting your search.
-            </p>
-            <button
-              onClick={resetFilters}
-              className="mt-5 px-5 py-2 rounded-xl text-sm font-bold border transition-colors"
-              style={{
-                borderColor: themeColors.border,
-                color: themeColors.primary,
-                backgroundColor: themeColors.background,
-              }}
-            >
-              Clear all filters
-            </button>
-          </div>
-        ) : (
-          <div
-            className="rounded-2xl border overflow-hidden"
-            style={{
-              borderColor: themeColors.border,
-              backgroundColor: themeColors.cardBackground,
-            }}
-          >
-            {/* Desktop Table */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr
-                    className="border-b"
-                    style={{
-                      backgroundColor: themeColors.background,
-                      borderColor: themeColors.border,
-                    }}
-                  >
-                    {[
-                      "FE ID",
-                      "Rider",
-                      "Contact",
-                      "Token",
-                      "Status",
-                      "Registered",
-                    ].map((h) => (
-                      <th
-                        key={h}
-                        className="text-left px-5 py-3.5 text-xs font-bold uppercase tracking-wider"
-                        style={{ color: themeColors.textSecondary }}
-                      >
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredRiders.map((rider, index) => {
-                    const { date, time } = formatDateTime(rider.createdAt);
-                    return (
-                      <tr
-                        key={rider._id}
-                        style={{
-                          borderBottom:
-                            index !== filteredRiders.length - 1
-                              ? `1px solid ${themeColors.border}`
-                              : "none",
-                        }}
-                      >
-                        <td className="px-5 py-4">
-                          <span
-                            className="font-mono text-xs font-bold px-2 py-1 rounded-lg"
-                            style={{
-                              backgroundColor: themeColors.primary + "12",
-                              color: themeColors.primary,
-                            }}
-                          >
-                            {rider.feId}
-                          </span>
-                        </td>
-                        <td className="px-5 py-4">
-                          <p
-                            className="font-bold text-sm"
-                            style={{ color: themeColors.textPrimary }}
-                          >
-                            {rider.fullName}
-                          </p>
-                        </td>
-                        <td
-                          className="px-5 py-4 text-sm"
-                          style={{ color: themeColors.textSecondary }}
-                        >
-                          {rider.phone}
-                        </td>
-                        <td className="px-5 py-4">
-                          <span
-                            className="font-black text-base tabular-nums"
-                            style={{ color: "#f97316" }}
-                          >
-                            #{rider.token}
-                          </span>
-                        </td>
-                        <td className="px-5 py-4">
-                          <StatusBadge status={rider.status} />
-                        </td>
-                        <td className="px-5 py-4">
-                          <p
-                            className="text-sm font-semibold"
-                            style={{ color: themeColors.textPrimary }}
-                          >
-                            {date}
-                          </p>
-                          <p
-                            className="text-xs mt-0.5"
-                            style={{ color: themeColors.textSecondary }}
-                          >
-                            {time}
-                          </p>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Mobile Card List */}
-            <div
-              className="md:hidden divide-y"
-              style={{ borderColor: themeColors.border }}
-            >
-              {filteredRiders.map((rider) => {
-                const { date, time } = formatDateTime(rider.createdAt);
-                return (
-                  <div key={rider._id} className="p-4 space-y-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p
-                          className="font-bold text-sm truncate"
-                          style={{ color: themeColors.textPrimary }}
-                        >
-                          {rider.fullName}
-                        </p>
-                        <p
-                          className="text-xs mt-0.5"
-                          style={{ color: themeColors.textSecondary }}
-                        >
-                          {rider.phone}
-                        </p>
-                      </div>
-                      <StatusBadge status={rider.status} />
-                    </div>
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <span
-                        className="font-mono text-xs font-bold px-2 py-1 rounded-lg"
-                        style={{
-                          backgroundColor: themeColors.primary + "12",
-                          color: themeColors.primary,
-                        }}
-                      >
-                        {rider.feId}
-                      </span>
-                      <span
-                        className="font-black text-sm"
-                        style={{ color: "#f97316" }}
-                      >
-                        #{rider.token}
-                      </span>
-                      <span
-                        className="text-xs ml-auto"
-                        style={{ color: themeColors.textSecondary }}
-                      >
-                        {date} · {time}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Footer */}
-            <div
-              className="px-5 py-3.5 border-t flex flex-wrap items-center justify-between gap-2"
-              style={{
-                borderColor: themeColors.border,
-                backgroundColor: themeColors.background,
-              }}
-            >
-              <p
-                className="text-xs font-medium"
-                style={{ color: themeColors.textSecondary }}
-              >
-                Showing{" "}
-                <span
-                  className="font-black"
-                  style={{ color: themeColors.textPrimary }}
-                >
-                  {filteredRiders.length}
-                </span>{" "}
-                of{" "}
-                <span
-                  className="font-black"
-                  style={{ color: themeColors.textPrimary }}
-                >
-                  {riders.length}
-                </span>{" "}
-                entries
-              </p>
-            </div>
-          </div>
-        )}
+        <button 
+          onClick={downloadCSV} 
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all text-white cursor-pointer hover:opacity-90 active:scale-95"
+          style={{ backgroundColor: themeColors.primary }}
+        >
+          <Download size={18} />
+          Export CSV
+        </button>
       </div>
 
-      {/* ── Filter Side Drawer ── */}
+      {/* Search & Filter Row */}
+      <div className="flex gap-3">
+        <div className="relative flex-1">
+          <span className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: themeColors.textSecondary }}>
+            <Search size={18} />
+          </span>
+          <input
+            type="text"
+            placeholder="Search by name, phone or FE ID…"
+            value={filters.searchValue}
+            onChange={(e) => handleFilterChange("searchValue", e.target.value)}
+            className="w-full pl-11 pr-4 py-3 rounded-2xl border outline-none text-sm font-medium transition-all focus:ring-4 focus:ring-blue-500/10"
+            style={{
+              borderColor: themeColors.border,
+              backgroundColor: themeColors.cardBackground,
+              color: themeColors.textPrimary,
+            }}
+          />
+        </div>
+        <button
+          onClick={() => setIsFilterOpen(true)}
+          className="flex items-center gap-2 px-5 py-3 rounded-2xl border text-sm font-bold transition-all cursor-pointer hover:bg-zinc-50"
+          style={{
+            borderColor: activeFilterCount > 0 ? themeColors.primary : themeColors.border,
+            backgroundColor: activeFilterCount > 0 ? themeColors.primary + "08" : themeColors.cardBackground,
+            color: activeFilterCount > 0 ? themeColors.primary : themeColors.textPrimary,
+          }}
+        >
+          <SlidersHorizontal size={18} />
+          <span className="hidden sm:inline">Filters</span>
+          {activeFilterCount > 0 && (
+            <span className="w-5 h-5 rounded-full text-[10px] font-black flex items-center justify-center text-white" style={{ backgroundColor: themeColors.primary }}>
+              {activeFilterCount}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {/* Content Section */}
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-32 rounded-2xl border bg-white/50" style={{ borderColor: themeColors.border }}>
+          <Loader2 className="w-8 h-8 animate-spin" style={{ color: themeColors.primary }} />
+          <p className="text-sm font-medium mt-3" style={{ color: themeColors.textSecondary }}>Loading riders...</p>
+        </div>
+      ) : (
+        <div 
+          className="border rounded-2xl overflow-hidden"
+          style={{ borderColor: themeColors.border, backgroundColor: themeColors.cardBackground }}
+        >
+          {/* Desktop View (Table) */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr style={{ backgroundColor: themeColors.background, borderBottom: `1px solid ${themeColors.border}` }}>
+                  {[
+                    "FE ID",
+                    "Rider Info",
+                    "Token",
+                    "Check In",
+                    "Check Out",
+                    "Duration",
+                  ].map((h) => (
+                    <th key={h} className="p-4 text-left font-bold uppercase tracking-wider text-[10px]" style={{ color: themeColors.textSecondary }}>
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+
+              <tbody>
+                {riders.map((r, index) => {
+                  const inT = formatDateTime(r.createdAt);
+                  const outT = r.checkedOutAt ? formatDateTime(r.checkedOutAt) : null;
+
+                  return (
+                    <tr 
+                      key={r._id} 
+                      style={{ borderBottom: index !== riders.length - 1 ? `1px solid ${themeColors.border}` : "none" }}
+                      className="hover:bg-zinc-50 transition-colors"
+                    >
+                      <td className="p-4">
+                        <span 
+                          className="font-mono text-[11px] font-bold px-2.5 py-1 rounded-lg border"
+                          style={{ 
+                            backgroundColor: themeColors.background, 
+                            borderColor: themeColors.border,
+                            color: themeColors.primary 
+                          }}
+                        >
+                          {r.feId}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex flex-col">
+                          <span className="font-bold text-sm" style={{ color: themeColors.textPrimary }}>{r.fullName}</span>
+                          <span className="text-xs" style={{ color: themeColors.textSecondary }}>{r.phone}</span>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <span className="font-black text-orange-500 tabular-nums">#{r.token}</span>
+                      </td>
+
+                      <td className="p-4">
+                        <div className="flex flex-col">
+                          <span className="font-bold" style={{ color: themeColors.textPrimary }}>{inT.time}</span>
+                          <span className="text-[10px] uppercase font-semibold" style={{ color: themeColors.textSecondary }}>{inT.date}</span>
+                        </div>
+                      </td>
+
+                      <td className="p-4">
+                        {outT ? (
+                          <div className="flex flex-col">
+                            <span className="font-bold" style={{ color: themeColors.textPrimary }}>{outT.time}</span>
+                            <span className="text-[10px] uppercase font-semibold" style={{ color: themeColors.textSecondary }}>{outT.date}</span>
+                          </div>
+                        ) : (
+                          <span className="text-[10px] font-bold uppercase px-2 py-1 rounded-md bg-zinc-100 text-zinc-400">In Progress</span>
+                        )}
+                      </td>
+
+                      <td className="p-4 font-bold" style={{ color: themeColors.textPrimary }}>
+                        {getDurationMinutes(r.createdAt, r.checkedOutAt)}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile View (Cards) */}
+          <div className="md:hidden divide-y" style={{ borderColor: themeColors.border }}>
+            {riders.map((r) => {
+              const inT = formatDateTime(r.createdAt);
+              const outT = r.checkedOutAt ? formatDateTime(r.checkedOutAt) : null;
+
+              return (
+                <div key={r._id} className="p-4 space-y-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-bold text-base truncate" style={{ color: themeColors.textPrimary }}>{r.fullName}</p>
+                      <p className="text-sm" style={{ color: themeColors.textSecondary }}>{r.phone}</p>
+                    </div>
+                    <span className="font-black text-orange-500 flex-shrink-0">#{r.token}</span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 pt-2">
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: themeColors.textSecondary }}>Check In</p>
+                      <p className="text-sm font-bold" style={{ color: themeColors.textPrimary }}>{inT.time}</p>
+                      <p className="text-[10px]" style={{ color: themeColors.textSecondary }}>{inT.date}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: themeColors.textSecondary }}>Check Out</p>
+                      {outT ? (
+                        <>
+                          <p className="text-sm font-bold" style={{ color: themeColors.textPrimary }}>{outT.time}</p>
+                          <p className="text-[10px]" style={{ color: themeColors.textSecondary }}>{outT.date}</p>
+                        </>
+                      ) : (
+                        <p className="text-sm font-bold text-zinc-400">Pending</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2">
+                    <span 
+                      className="font-mono text-[10px] font-bold px-2 py-0.5 rounded border"
+                      style={{ backgroundColor: themeColors.background, borderColor: themeColors.border, color: themeColors.primary }}
+                    >
+                      {r.feId}
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] font-bold uppercase" style={{ color: themeColors.textSecondary }}>Duration:</span>
+                      <span className="text-sm font-bold" style={{ color: themeColors.textPrimary }}>{getDurationMinutes(r.createdAt, r.checkedOutAt)}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          
+          {/* Pagination Footer */}
+          <div 
+            className="p-4 border-t flex flex-col sm:flex-row items-center justify-between gap-4"
+            style={{ borderColor: themeColors.border, backgroundColor: themeColors.background }}
+          >
+            <p className="text-xs font-medium" style={{ color: themeColors.textSecondary }}>
+              Showing <span className="font-black" style={{ color: themeColors.textPrimary }}>{riders.length}</span> of <span className="font-black" style={{ color: themeColors.textPrimary }}>{pagination.total}</span> entries
+            </p>
+
+            <div className="flex items-center gap-2">
+              <button
+                disabled={pagination.page === 1}
+                onClick={() => fetchRiders(pagination.page - 1)}
+                className="px-4 py-2 rounded-xl border text-xs font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer hover:bg-white"
+                style={{ borderColor: themeColors.border, color: themeColors.textPrimary }}
+              >
+                Previous
+              </button>
+              <div className="flex items-center gap-1 mx-2">
+                <span className="text-xs font-bold" style={{ color: themeColors.textPrimary }}>{pagination.page}</span>
+                <span className="text-xs" style={{ color: themeColors.textSecondary }}>/</span>
+                <span className="text-xs" style={{ color: themeColors.textSecondary }}>{pagination.totalPages}</span>
+              </div>
+              <button
+                disabled={pagination.page === pagination.totalPages}
+                onClick={() => fetchRiders(pagination.page + 1)}
+                className="px-4 py-2 rounded-xl border text-xs font-bold transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer hover:bg-white"
+                style={{ borderColor: themeColors.border, color: themeColors.textPrimary }}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <FilterDrawer
-        key={isFilterOpen ? "open" : "closed"}
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}
         filters={filters}
-        onApply={(newFilters) => {
-          setFilters(newFilters);
+        onApply={(f) => {
+          setFilters(f);
           setIsFilterOpen(false);
         }}
         activeFilterCount={activeFilterCount}

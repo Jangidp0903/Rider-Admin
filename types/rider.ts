@@ -16,6 +16,6 @@ export interface Rider {
   fullName: string;
   phone: string;
   token: number;
-  status: "checked-in" | "checked-out";
+  checkedOutAt?: string | null;
   createdAt: string;
 }
