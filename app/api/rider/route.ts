@@ -141,10 +141,17 @@ export async function GET(req: Request) {
       }
     }
 
+    const sortParam = searchParams.get("sort") || "latest";
+    let sortQuery: any = { createdAt: -1 };
+
+    if (sortParam === "oldest") {
+      sortQuery = { createdAt: 1 };
+    }
+
     const skip = (page - 1) * limit;
 
     const [riders, total] = await Promise.all([
-      Rider.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      Rider.find(query).sort(sortQuery).skip(skip).limit(limit),
       Rider.countDocuments(query),
     ]);
 

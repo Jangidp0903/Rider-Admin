@@ -311,6 +311,35 @@ export default function RidersPage() {
         </button>
       </div>
 
+      {/* Status Tabs */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+        {[
+          { label: "All", value: "all" },
+          { label: "Checked In", value: "checked-in" },
+          { label: "Checked Out", value: "checked-out" },
+        ].map((tab) => {
+          const isActive = filters.statusFilter === tab.value;
+          return (
+            <button
+              key={tab.value}
+              onClick={() => handleFilterChange("statusFilter", tab.value as any)}
+              className={`px-6 py-2.5 rounded-full text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap border-2 cursor-pointer ${
+                isActive ? "shadow-sm" : ""
+              }`}
+              style={{
+                backgroundColor: isActive
+                  ? themeColors.primary
+                  : themeColors.cardBackground,
+                color: isActive ? "#fff" : themeColors.textSecondary,
+                borderColor: isActive ? themeColors.primary : themeColors.border,
+              }}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
       {/* Content Section */}
       {loading ? (
         <div
