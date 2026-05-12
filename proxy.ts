@@ -19,7 +19,7 @@ export async function proxy(request: NextRequest) {
     // Allow your frontend origin
     response.headers.set(
       "Access-Control-Allow-Origin",
-      "https://ev-bikerentals.vercel.app",
+      process.env.NEXT_API_URL || "*",
     );
     response.headers.set(
       "Access-Control-Allow-Methods",
