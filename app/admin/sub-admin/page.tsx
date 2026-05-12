@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 import { themeColors } from "@/lib/themeColors";
 import {
   Loader2,
@@ -23,6 +25,9 @@ import SubAdminModal from "@/components/SubAdminModal";
 import DeleteModal from "@/components/DeleteModal";
 
 export default function SubAdminPage() {
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
+
   const [subAdmins, setSubAdmins] = useState<SubAdmin[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -55,12 +60,19 @@ export default function SubAdminPage() {
   }, []);
 
   useEffect(() => {
+    if (!authLoading && (!user || user.role !== "admin")) {
+      router.push("/admin/dashboard");
+      return;
+    }
+
     const delayDebounceFn = setTimeout(() => {
-      fetchSubAdmins(1, search);
+      if (user?.role === "admin") {
+        fetchSubAdmins(1, search);
+      }
     }, 500);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [search, fetchSubAdmins]);
+  }, [search, fetchSubAdmins, user, authLoading, router]);
 
   const handleToggleStatus = async () => {
     const { id, currentStatus } = statusModal;
@@ -107,6 +119,16 @@ export default function SubAdminPage() {
       minute: "2-digit",
     });
   };
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="animate-spin" size={32} style={{ color: themeColors.primary }} />
+      </div>
+    );
+  }
+
+  if (!user || user.role !== "admin") return null;
 
   return (
     <div className="p-2 space-y-3 max-w-7xl mx-auto">

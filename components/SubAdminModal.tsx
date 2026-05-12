@@ -9,6 +9,7 @@ import {
   MapPin,
   Loader2,
   ChevronDown,
+  ShieldCheck,
 } from "lucide-react";
 import { themeColors } from "@/lib/themeColors";
 import { HUB_OPTIONS } from "@/lib/constants";
@@ -167,6 +168,7 @@ export default function SubAdminModal({
     email: "",
     phoneNumber: "",
     hubName: "",
+    password: "",
   });
   const [error, setError] = useState("");
 
@@ -177,9 +179,10 @@ export default function SubAdminModal({
         email: subAdmin.email || "",
         phoneNumber: subAdmin.phoneNumber || "",
         hubName: subAdmin.hubName || "",
+        password: "",
       });
     } else {
-      setFormData({ name: "", email: "", phoneNumber: "", hubName: "" });
+      setFormData({ name: "", email: "", phoneNumber: "", hubName: "", password: "" });
     }
     setError("");
   }, [subAdmin, isOpen]);
@@ -202,7 +205,7 @@ export default function SubAdminModal({
       } else {
         const res = await axios.post("/api/sub-admin", formData);
         if (res.data.success) {
-          setFormData({ name: "", email: "", phoneNumber: "", hubName: "" });
+          setFormData({ name: "", email: "", phoneNumber: "", hubName: "", password: "" });
           onSuccess();
           onClose();
         }
@@ -318,6 +321,40 @@ export default function SubAdminModal({
                 value={formData.email}
                 onChange={(e) =>
                   setFormData({ ...formData, email: e.target.value })
+                }
+                className="w-full pl-9 pr-4 py-2 rounded-lg border outline-none text-xs transition-all focus:ring-4"
+                style={
+                  {
+                    borderColor: themeColors.border,
+                    backgroundColor: themeColors.background,
+                    color: themeColors.textPrimary,
+                    "--tw-ring-color": themeColors.primary + "10",
+                  } as any
+                }
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <label
+              className="text-[10px] font-semibold uppercase tracking-wider ml-1"
+              style={{ color: themeColors.textSecondary }}
+            >
+              Password {subAdmin && <span className="text-[8px] opacity-60">(Leave empty to keep current)</span>}
+            </label>
+            <div className="relative">
+              <ShieldCheck
+                size={14}
+                className="absolute left-3 top-1/2 -translate-y-1/2"
+                style={{ color: themeColors.textSecondary }}
+              />
+              <input
+                type="password"
+                required={!subAdmin}
+                placeholder={subAdmin ? "••••••••" : "Enter password"}
+                value={formData.password}
+                onChange={(e) =>
+                  setFormData({ ...formData, password: e.target.value })
                 }
                 className="w-full pl-9 pr-4 py-2 rounded-lg border outline-none text-xs transition-all focus:ring-4"
                 style={

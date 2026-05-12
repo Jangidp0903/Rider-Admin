@@ -13,6 +13,7 @@ import Link from "next/link";
 import { themeColors } from "@/lib/themeColors";
 import apiClient from "@/lib/apiClient";
 import { useToast } from "@/context/ToastContext";
+import { useAuth } from "@/context/AuthContext";
 
 const Topbar = ({
   onToggleSidebar,
@@ -25,12 +26,14 @@ const Topbar = ({
 }) => {
   const [isDesktop, setIsDesktop] = useState(false);
   const { showToast } = useToast();
+  const { user, logout } = useAuth();
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const userDropdownRef = useRef(null);
   const userBtnRef = useRef(null);
 
   const pathname = usePathname();
-  const [adminName, setAdminName] = useState("Admin");
+  const adminName = user?.username || "Admin";
+  const userRole = user?.role === "admin" ? "Administrator" : "Sub Admin";
 
   const pageTitle = React.useMemo(() => {
     if (pathname.includes("/admin/dashboard")) return "Dashboard";
@@ -39,20 +42,6 @@ const Topbar = ({
     if (pathname.includes("/admin/settings")) return "Profile Settings";
     return "Admin Panel";
   }, [pathname]);
-
-  useEffect(() => {
-    const fetchAdmin = async () => {
-      try {
-        const res = await apiClient.get("/api/auth/me");
-        if (res.data && res.data.username) {
-          setAdminName(res.data.username);
-        }
-      } catch (err) {
-        console.error("Failed to fetch admin data", err);
-      }
-    };
-    fetchAdmin();
-  }, []);
 
   // Device detection
   useEffect(() => {
@@ -64,13 +53,8 @@ const Topbar = ({
 
   // Logout
   const handleLogout = async () => {
-    try {
-      await apiClient.post("/api/auth/logout");
-      showToast("Logout successfully", "success");
-      window.location.href = "/login";
-    } catch {
-      showToast("Logout failed", "error");
-    }
+    await logout();
+    showToast("Logout successfully", "success");
     setShowUserDropdown(false);
   };
 
@@ -216,7 +200,7 @@ const Topbar = ({
                       className="text-xs truncate"
                       style={{ color: themeColors.textSecondary }}
                     >
-                      Administrator
+                      {userRole}
                     </p>
                   </div>
                 </div>

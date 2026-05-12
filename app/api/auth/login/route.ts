@@ -18,15 +18,31 @@ export async function POST(req: Request) {
     // Sanitize input to prevent NoSQL injection
     const email = String(rawEmail);
 
-    const admin = await Admin.findOne({ email });
-    if (!admin) {
+    let user = await Admin.findOne({ email });
+    let role = "admin";
+
+    if (!user) {
+      const SubAdmin = (await import("@/models/SubAdmin")).default;
+      user = await SubAdmin.findOne({ email });
+      role = "subadmin";
+    }
+
+    if (!user) {
       return NextResponse.json(
         { error: "Invalid credentials" },
         { status: 401 },
       );
     }
 
-    const isValid = await verifyPassword(password, admin.password);
+    // Check if sub admin is active
+    if (role === "subadmin" && user.status !== "active") {
+      return NextResponse.json(
+        { error: "Your account is inactive. Please contact admin." },
+        { status: 403 },
+      );
+    }
+
+    const isValid = await verifyPassword(password, user.password);
     if (!isValid) {
       return NextResponse.json(
         { error: "Invalid credentials" },
@@ -35,15 +51,16 @@ export async function POST(req: Request) {
     }
 
     const accessToken = generateAccessToken({
-      id: admin._id,
-      email: admin.email,
-      username: admin.username,
+      id: user._id,
+      email: user.email,
+      username: (user as any).username || (user as any).name,
+      role: role,
     });
-    const refreshToken = generateRefreshToken({ id: admin._id });
+    const refreshToken = generateRefreshToken({ id: user._id, role: role });
 
     // Store refresh token in database for revocation
-    admin.refreshToken = refreshToken;
-    await admin.save();
+    user.refreshToken = refreshToken;
+    await user.save();
 
     const response = NextResponse.json(
       { message: "Login successful" },

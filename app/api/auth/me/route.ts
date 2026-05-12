@@ -16,16 +16,33 @@ export async function GET() {
 
     const secret = new TextEncoder().encode(JWT_SECRET);
     const { payload } = await jwtVerify(token, secret);
-    const adminId = payload.id;
+    const userId = payload.id;
+    const role = payload.role as string;
 
     await connectToDatabase();
-    const admin = await Admin.findById(adminId).select("-password");
-
-    if (!admin) {
-      return NextResponse.json({ error: "Admin not found" }, { status: 404 });
+    
+    let user;
+    if (role === "admin") {
+      user = await Admin.findById(userId).select("-password");
+    } else {
+      const SubAdmin = (await import("@/models/SubAdmin")).default;
+      user = await SubAdmin.findById(userId).select("-password");
     }
 
-    return NextResponse.json(admin);
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // Check status for sub admins
+    if (role === "subadmin" && user.status !== "active") {
+      return NextResponse.json({ error: "Account inactive" }, { status: 403 });
+    }
+
+    return NextResponse.json({
+      ...user.toObject(),
+      role,
+      username: user.username || user.name,
+    });
   } catch (error: unknown) {
     return NextResponse.json(
       { error: (error as Error).message || "Internal server error" },

@@ -1,15 +1,16 @@
 import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/db";
 import SubAdmin from "@/models/SubAdmin";
+import { hashPassword } from "@/lib/auth";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { name, email, phoneNumber, hubName } = body;
+    const { name, email, phoneNumber, hubName, password } = body;
 
-    if (!name || !email || !phoneNumber || !hubName) {
+    if (!name || !email || !phoneNumber || !hubName || !password) {
       return NextResponse.json(
-        { error: "Name, email, phone number and hub name are required." },
+        { error: "All fields including password are required." },
         { status: 400 },
       );
     }
@@ -25,12 +26,16 @@ export async function POST(req: Request) {
       );
     }
 
+    const hashedPassword = await hashPassword(password);
+
     const newSubAdmin = await SubAdmin.create({
       name,
       email,
       phoneNumber,
       hubName,
+      password: hashedPassword,
       status: "active",
+      role: "subadmin",
     });
 
     return NextResponse.json({
@@ -100,7 +105,7 @@ export async function GET(req: Request) {
 export async function PATCH(req: Request) {
   try {
     const body = await req.json();
-    const { id, name, email, phoneNumber, hubName, status } = body;
+    const { id, name, email, phoneNumber, hubName, status, password } = body;
 
     if (!id) {
       return NextResponse.json({ error: "ID is required." }, { status: 400 });
@@ -114,6 +119,7 @@ export async function PATCH(req: Request) {
     if (phoneNumber) updateData.phoneNumber = phoneNumber;
     if (hubName) updateData.hubName = hubName;
     if (status) updateData.status = status;
+    if (password) updateData.password = await hashPassword(password);
 
     const updated = await SubAdmin.findByIdAndUpdate(id, updateData, {
       new: true,
