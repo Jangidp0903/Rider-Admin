@@ -100,22 +100,24 @@ export async function GET(req: Request) {
 export async function PATCH(req: Request) {
   try {
     const body = await req.json();
-    const { id, status } = body;
+    const { id, name, email, phoneNumber, hubName, status } = body;
 
-    if (!id || !status) {
-      return NextResponse.json(
-        { error: "ID and status are required." },
-        { status: 400 },
-      );
+    if (!id) {
+      return NextResponse.json({ error: "ID is required." }, { status: 400 });
     }
 
     await connectToDatabase();
 
-    const updated = await SubAdmin.findByIdAndUpdate(
-      id,
-      { status },
-      { new: true },
-    );
+    const updateData: any = {};
+    if (name) updateData.name = name;
+    if (email) updateData.email = email;
+    if (phoneNumber) updateData.phoneNumber = phoneNumber;
+    if (hubName) updateData.hubName = hubName;
+    if (status) updateData.status = status;
+
+    const updated = await SubAdmin.findByIdAndUpdate(id, updateData, {
+      new: true,
+    });
 
     if (!updated) {
       return NextResponse.json(
@@ -126,7 +128,7 @@ export async function PATCH(req: Request) {
 
     return NextResponse.json({
       success: true,
-      message: "Status updated successfully",
+      message: "Sub admin updated successfully",
       data: updated,
     });
   } catch (error) {

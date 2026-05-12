@@ -16,6 +16,7 @@ import {
   ToggleLeft,
   ToggleRight,
   Trash2,
+  Edit,
 } from "lucide-react";
 import { SubAdmin, SubAdminPagination } from "@/types/subAdmin";
 import SubAdminModal from "@/components/SubAdminModal";
@@ -25,6 +26,7 @@ export default function SubAdminPage() {
   const [subAdmins, setSubAdmins] = useState<SubAdmin[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedSubAdmin, setSelectedSubAdmin] = useState<SubAdmin | null>(null);
   const [search, setSearch] = useState("");
   const [pagination, setPagination] = useState({
     total: 0,
@@ -124,7 +126,10 @@ export default function SubAdminPage() {
           </div>
         </div>
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => {
+            setSelectedSubAdmin(null);
+            setIsModalOpen(true);
+          }}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-white transition-all hover:opacity-90 active:scale-95 cursor-pointer"
           style={{ backgroundColor: themeColors.primary }}
         >
@@ -273,6 +278,16 @@ export default function SubAdminPage() {
                     <td className="px-4 py-2">
                       <div className="flex items-center gap-1">
                         <button 
+                          onClick={() => {
+                            setSelectedSubAdmin(sa);
+                            setIsModalOpen(true);
+                          }}
+                          className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-600 transition-colors cursor-pointer" 
+                          title="Edit"
+                        >
+                          <Edit size={14} />
+                        </button>
+                        <button 
                           onClick={() => setDeleteModal({ isOpen: true, id: sa._id, loading: false })}
                           className="p-1.5 rounded-lg hover:bg-red-50 text-red-500 transition-colors cursor-pointer" 
                           title="Delete"
@@ -319,8 +334,12 @@ export default function SubAdminPage() {
 
       <SubAdminModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedSubAdmin(null);
+        }}
         onSuccess={() => fetchSubAdmins(1, search)}
+        subAdmin={selectedSubAdmin}
       />
 
       {/* Delete Confirmation Modal */}

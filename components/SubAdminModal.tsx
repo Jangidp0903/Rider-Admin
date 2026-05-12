@@ -19,6 +19,7 @@ interface SubAdminModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  subAdmin?: any;
 }
 
 interface CustomSelectProps {
@@ -158,6 +159,7 @@ export default function SubAdminModal({
   isOpen,
   onClose,
   onSuccess,
+  subAdmin,
 }: SubAdminModalProps) {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -168,17 +170,42 @@ export default function SubAdminModal({
   });
   const [error, setError] = useState("");
 
+  React.useEffect(() => {
+    if (subAdmin) {
+      setFormData({
+        name: subAdmin.name || "",
+        email: subAdmin.email || "",
+        phoneNumber: subAdmin.phoneNumber || "",
+        hubName: subAdmin.hubName || "",
+      });
+    } else {
+      setFormData({ name: "", email: "", phoneNumber: "", hubName: "" });
+    }
+    setError("");
+  }, [subAdmin, isOpen]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
     try {
-      const res = await axios.post("/api/sub-admin", formData);
-      if (res.data.success) {
-        setFormData({ name: "", email: "", phoneNumber: "", hubName: "" });
-        onSuccess();
-        onClose();
+      if (subAdmin) {
+        const res = await axios.patch("/api/sub-admin", {
+          ...formData,
+          id: subAdmin._id,
+        });
+        if (res.data.success) {
+          onSuccess();
+          onClose();
+        }
+      } else {
+        const res = await axios.post("/api/sub-admin", formData);
+        if (res.data.success) {
+          setFormData({ name: "", email: "", phoneNumber: "", hubName: "" });
+          onSuccess();
+          onClose();
+        }
       }
     } catch (err: any) {
       setError(err.response?.data?.error || "Something went wrong");
@@ -208,11 +235,11 @@ export default function SubAdminModal({
             className="text-base font-semibold"
             style={{ color: themeColors.textPrimary }}
           >
-            Add New Sub Admin
+            {subAdmin ? "Edit Sub Admin" : "Add New Sub Admin"}
           </h3>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg transition-colors hover:bg-zinc-100"
+            className="p-1.5 rounded-lg cursor-pointer transition-colors hover:bg-zinc-100"
             style={{ color: themeColors.textSecondary }}
           >
             <X size={16} />
@@ -349,8 +376,10 @@ export default function SubAdminModal({
               {loading ? (
                 <>
                   <Loader2 size={14} className="animate-spin" />
-                  Creating...
+                  {subAdmin ? "Updating..." : "Creating..."}
                 </>
+              ) : subAdmin ? (
+                "Update Sub Admin"
               ) : (
                 "Create Sub Admin"
               )}
