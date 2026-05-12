@@ -10,6 +10,7 @@ interface User {
   username: string;
   role: "admin" | "subadmin";
   status?: string;
+  hubName?: string;
 }
 
 interface AuthContextType {

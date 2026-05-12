@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import connectToDatabase from "@/lib/db";
 import Rider from "@/models/Rider";
+import { cookies } from "next/headers";
+import { jwtVerify } from "jose";
+import Admin from "@/models/Admin";
+
+const JWT_SECRET = process.env.JWT_SECRET || "fallback_secret_for_development";
 
 export async function POST(req: Request) {
   try {
@@ -93,8 +98,44 @@ export async function GET(req: Request) {
 
     await connectToDatabase();
 
+    // 🔒 Auth & Hub Verification
+    const token = (await cookies()).get("token")?.value;
+    if (!token) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const secret = new TextEncoder().encode(JWT_SECRET);
+    const { payload } = await jwtVerify(token, secret);
+    const userId = payload.id;
+    const userRole = payload.role as string;
+
+    let userHub = "";
+
+    if (userRole === "admin") {
+      // Admins have no hub restriction by default
+    } else if (userRole === "subadmin") {
+      const SubAdmin = (await import("@/models/SubAdmin")).default;
+      const subAdminUser = await SubAdmin.findById(userId);
+      
+      if (!subAdminUser || subAdminUser.status !== "active") {
+        return NextResponse.json({ error: "Unauthorized or Inactive account" }, { status: 403 });
+      }
+      userHub = subAdminUser.hubName;
+    } else {
+      return NextResponse.json({ error: "Invalid Role" }, { status: 403 });
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const query: any = {};
+
+    // 🏷️ Apply Hub Filter based on Role
+    if (userRole === "subadmin") {
+      // Sub Admin is strictly restricted to their hub
+      query.hubName = userHub;
+    } else if (hub !== "all") {
+      // Admin can filter by any hub if they choose to
+      query.hubName = hub;
+    }
 
     // Search
     if (search) {
@@ -110,11 +151,6 @@ export async function GET(req: Request) {
       query.checkedOutAt = null;
     } else if (status === "checked-out") {
       query.checkedOutAt = { $ne: null };
-    }
-
-    // Hub Filter
-    if (hub !== "all") {
-      query.hubName = hub;
     }
 
     // Date

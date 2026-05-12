@@ -13,6 +13,7 @@ import {
 import { themeColors } from "@/lib/themeColors";
 import { HUB_OPTIONS } from "@/lib/constants";
 import CustomSelect from "./CustomSelect";
+import { useAuth } from "@/context/AuthContext";
 import {
   FilterState,
   StatusFilterType,
@@ -50,6 +51,9 @@ function FilterContent({
   hasActiveFilters,
   hideSearch = false,
 }: FilterContentProps) {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
+
   return (
     <div className="space-y-4">
       {/* Search */}
@@ -85,16 +89,18 @@ function FilterContent({
       )}
 
       {/* Hub Filter */}
-      <CustomSelect
-        label="Select Hub"
-        icon={<MapPin size={14} />}
-        value={filters.hubFilter}
-        onChange={(v) => onChange("hubFilter", v)}
-        options={[
-          { label: "All Hubs", value: "all" },
-          ...HUB_OPTIONS,
-        ]}
-      />
+      {isAdmin && (
+        <CustomSelect
+          label="Select Hub"
+          icon={<MapPin size={14} />}
+          value={filters.hubFilter}
+          onChange={(v) => onChange("hubFilter", v)}
+          options={[
+            { label: "All Hubs", value: "all" },
+            ...HUB_OPTIONS,
+          ]}
+        />
+      )}
 
       {/* Row: Status + Sort */}
       <div className="grid grid-cols-2 gap-4">
@@ -228,6 +234,7 @@ export default function FilterDrawer({
   activeFilterCount,
 }: FilterDrawerProps) {
   const [tempFilters, setTempFilters] = useState<FilterState>(filters);
+  const { user } = useAuth();
 
   // Sync temp filters with actual filters whenever drawer opens
   // We handle this by using a key on the component in the parent
@@ -252,9 +259,9 @@ export default function FilterDrawer({
       tempFilters.statusFilter !== "all" ||
       tempFilters.dateFilter !== "all" ||
       tempFilters.sortOrder !== "latest" ||
-      tempFilters.hubFilter !== "all"
+      (user?.role === "admin" && tempFilters.hubFilter !== "all")
     );
-  }, [tempFilters]);
+  }, [tempFilters, user]);
 
   // Prevent body scroll when open
   useEffect(() => {
