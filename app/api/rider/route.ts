@@ -52,6 +52,7 @@ export async function POST(req: Request) {
 
     const todayCount = await Rider.countDocuments({
       createdAt: { $gte: startOfDay, $lte: endOfDay },
+      hubName: hubName, // Separate token sequence for each hub
     });
 
     const token = todayCount + 1;
