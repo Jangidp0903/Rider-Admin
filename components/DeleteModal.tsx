@@ -11,6 +11,8 @@ interface DeleteModalProps {
   title?: string;
   message?: string;
   isLoading?: boolean;
+  confirmText?: string;
+  confirmIcon?: React.ReactNode;
 }
 
 export default function DeleteModal({
@@ -20,6 +22,8 @@ export default function DeleteModal({
   title = "Delete Confirmation",
   message = "Are you sure you want to delete this? This action cannot be undone.",
   isLoading = false,
+  confirmText = "Delete",
+  confirmIcon = <Trash2 className="w-4 h-4" aria-hidden="true" />,
 }: DeleteModalProps) {
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -177,12 +181,12 @@ export default function DeleteModal({
                     "
                     aria-hidden="true"
                   />
-                  <span>Deleting…</span>
+                  <span>Processing…</span>
                 </>
               ) : (
                 <>
-                  <Trash2 className="w-4 h-4" aria-hidden="true" />
-                  <span>Delete</span>
+                  {confirmIcon}
+                  <span>{confirmText}</span>
                 </>
               )}
             </button>

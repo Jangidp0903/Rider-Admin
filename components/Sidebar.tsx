@@ -1,14 +1,43 @@
 "use client";
 import React from "react";
 import { usePathname } from "next/navigation";
-import { Settings, X, LayoutDashboard, Bike, Users } from "lucide-react";
+import {
+  Settings,
+  X,
+  LayoutDashboard,
+  Bike,
+  Users,
+  ShieldCheck,
+} from "lucide-react";
 import Link from "next/link";
 import { themeColors } from "@/lib/themeColors";
+import { useAuth } from "@/context/AuthContext";
 
 const menuItems = [
-  { name: "Dashboard", icon: LayoutDashboard, path: "/admin/dashboard" },
-  { name: "Rider Details", icon: Users, path: "/admin/riders" },
-  { name: "Profile Settings", icon: Settings, path: "/admin/settings" },
+  {
+    name: "Dashboard",
+    icon: LayoutDashboard,
+    path: "/admin/dashboard",
+    roles: ["admin", "subadmin"],
+  },
+  {
+    name: "Rider Details",
+    icon: Users,
+    path: "/admin/riders",
+    roles: ["admin", "subadmin"],
+  },
+  {
+    name: "Sub Admin",
+    icon: ShieldCheck,
+    path: "/admin/sub-admin",
+    roles: ["admin"],
+  },
+  {
+    name: "Profile Settings",
+    icon: Settings,
+    path: "/admin/settings",
+    roles: ["admin"],
+  },
 ];
 
 const Sidebar = ({
@@ -21,6 +50,11 @@ const Sidebar = ({
   onClose: () => void;
 }) => {
   const pathname = usePathname();
+  const { user } = useAuth();
+
+  const filteredItems = menuItems.filter(
+    (item) => !item.roles || (user && item.roles.includes(user.role)),
+  );
 
   return (
     <>
@@ -63,7 +97,7 @@ const Sidebar = ({
 
         {/* Menu Section */}
         <nav className="flex flex-col p-4 space-y-1 flex-1 overflow-y-auto">
-          {menuItems.map((item) => {
+          {filteredItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.path;
 
@@ -173,7 +207,7 @@ const Sidebar = ({
 
         {/* Mobile Menu */}
         <nav className="flex flex-col p-4 space-y-1 flex-1 overflow-y-auto">
-          {menuItems.map((item) => {
+          {filteredItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.path;
 

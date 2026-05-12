@@ -1,0 +1,180 @@
+import { NextResponse } from "next/server";
+import connectToDatabase from "@/lib/db";
+import SubAdmin from "@/models/SubAdmin";
+import { hashPassword } from "@/lib/auth";
+
+export async function POST(req: Request) {
+  try {
+    const body = await req.json();
+    const { name, email, phoneNumber, hubName, password } = body;
+
+    if (!name || !email || !phoneNumber || !hubName || !password) {
+      return NextResponse.json(
+        { error: "All fields including password are required." },
+        { status: 400 },
+      );
+    }
+
+    await connectToDatabase();
+
+    // Check if email already exists
+    const existing = await SubAdmin.findOne({ email });
+    if (existing) {
+      return NextResponse.json(
+        { error: "A sub admin with this email already exists." },
+        { status: 400 },
+      );
+    }
+
+    const hashedPassword = await hashPassword(password);
+
+    const newSubAdmin = await SubAdmin.create({
+      name,
+      email,
+      phoneNumber,
+      hubName,
+      password: hashedPassword,
+      status: "active",
+      role: "subadmin",
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Sub admin created successfully",
+      data: newSubAdmin,
+    });
+  } catch (error) {
+    console.error("SUB_ADMIN_POST_ERROR:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
+  }
+}
+
+export async function GET(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "20");
+    const search = searchParams.get("search") || "";
+
+    await connectToDatabase();
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const query: any = {};
+
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+        { phoneNumber: { $regex: search, $options: "i" } },
+        { hubName: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const skip = (page - 1) * limit;
+
+    const [subAdmins, total] = await Promise.all([
+      SubAdmin.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      SubAdmin.countDocuments(query),
+    ]);
+
+    return NextResponse.json(
+      {
+        success: true,
+        data: subAdmins,
+        pagination: {
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit),
+        },
+      },
+      { status: 200 },
+    );
+  } catch (error) {
+    console.error("SUB_ADMIN_GET_ERROR:", error);
+    return NextResponse.json(
+      { error: "Internal server error while fetching sub admins." },
+      { status: 500 },
+    );
+  }
+}
+
+export async function PATCH(req: Request) {
+  try {
+    const body = await req.json();
+    const { id, name, email, phoneNumber, hubName, status, password } = body;
+
+    if (!id) {
+      return NextResponse.json({ error: "ID is required." }, { status: 400 });
+    }
+
+    await connectToDatabase();
+
+    const updateData: any = {};
+    if (name) updateData.name = name;
+    if (email) updateData.email = email;
+    if (phoneNumber) updateData.phoneNumber = phoneNumber;
+    if (hubName) updateData.hubName = hubName;
+    if (status) updateData.status = status;
+    if (password) updateData.password = await hashPassword(password);
+
+    const updated = await SubAdmin.findByIdAndUpdate(id, updateData, {
+      new: true,
+    });
+
+    if (!updated) {
+      return NextResponse.json(
+        { error: "Sub admin not found." },
+        { status: 404 },
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Sub admin updated successfully",
+      data: updated,
+    });
+  } catch (error) {
+    console.error("SUB_ADMIN_PATCH_ERROR:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
+  }
+}
+
+export async function DELETE(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json({ error: "ID is required." }, { status: 400 });
+    }
+
+    await connectToDatabase();
+
+    const deleted = await SubAdmin.findByIdAndDelete(id);
+
+    if (!deleted) {
+      return NextResponse.json(
+        { error: "Sub admin not found." },
+        { status: 404 },
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Sub admin deleted successfully",
+    });
+  } catch (error) {
+    console.error("SUB_ADMIN_DELETE_ERROR:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
+  }
+}

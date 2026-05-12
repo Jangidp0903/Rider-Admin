@@ -12,6 +12,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 
+import { useAuth } from "@/context/AuthContext";
 import { Rider, FilterState } from "@/types/rider";
 import FilterDrawer from "@/components/FilterDrawer";
 
@@ -114,6 +115,7 @@ function StatusPill({ active }: StatusPillProps) {
 /* ── Page ───────────────────────── */
 
 export default function RidersPage() {
+  const { user } = useAuth();
   const [riders, setRiders] = useState<Rider[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -132,6 +134,13 @@ export default function RidersPage() {
     const t = setTimeout(() => setDebouncedSearch(filters.searchValue), 500);
     return () => clearTimeout(t);
   }, [filters.searchValue]);
+
+  // Sync hub filter if subadmin
+  useEffect(() => {
+    if (user?.role === "subadmin" && user.hubName) {
+      setFilters(prev => ({ ...prev, hubFilter: user.hubName as string }));
+    }
+  }, [user]);
 
   const fetchRiders = useCallback(
     async (page: number) => {
@@ -180,6 +189,7 @@ export default function RidersPage() {
         search: debouncedSearch,
         status: filters.statusFilter,
         dateRange: filters.dateFilter,
+        hub: filters.hubFilter,
         from: filters.customDateRange.from,
         to: filters.customDateRange.to,
       });
@@ -228,9 +238,9 @@ export default function RidersPage() {
     if (filters.searchValue) count++;
     if (filters.statusFilter !== "all") count++;
     if (filters.dateFilter !== "all") count++;
-    if (filters.hubFilter && filters.hubFilter !== "all") count++;
+    if (user?.role === "admin" && filters.hubFilter && filters.hubFilter !== "all") count++;
     return count;
-  }, [filters]);
+  }, [filters, user]);
 
   return (
     <div className="p-0.5 space-y-4 max-w-full mx-auto">

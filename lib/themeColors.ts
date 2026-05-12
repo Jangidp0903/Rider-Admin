@@ -1,6 +1,6 @@
 export const themeColors = {
-  primary: "#EF4F5F",
-  primaryHover: "#D83A4B",
+  primary: "#E23744",
+  primaryHover: "#CB202D",
   background: "#FFF5F5",
   cardBackground: "#FFFFFF",
   textPrimary: "#1C1C1C",

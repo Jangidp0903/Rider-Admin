@@ -8,6 +8,10 @@ if (!JWT_SECRET) {
   throw new Error("JWT_SECRET is not defined in environment variables");
 }
 
+if (!process.env.NEXT_API_URL) {
+  throw new Error("NEXT_API_URL is not defined in environment variables");
+}
+
 export async function proxy(request: NextRequest) {
   // Handle CORS for /api routes
   if (request.nextUrl.pathname.startsWith("/api")) {
@@ -19,7 +23,7 @@ export async function proxy(request: NextRequest) {
     // Allow your frontend origin
     response.headers.set(
       "Access-Control-Allow-Origin",
-      "https://ev-bikerentals.vercel.app",
+      process.env.NEXT_API_URL!,
     );
     response.headers.set(
       "Access-Control-Allow-Methods",
