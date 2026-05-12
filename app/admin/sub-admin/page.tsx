@@ -15,9 +15,11 @@ import {
   MoreVertical,
   ToggleLeft,
   ToggleRight,
+  Trash2,
 } from "lucide-react";
 import { SubAdmin, SubAdminPagination } from "@/types/subAdmin";
 import SubAdminModal from "@/components/SubAdminModal";
+import DeleteModal from "@/components/DeleteModal";
 
 export default function SubAdminPage() {
   const [subAdmins, setSubAdmins] = useState<SubAdmin[]>([]);
@@ -30,6 +32,10 @@ export default function SubAdminPage() {
     limit: 20,
     totalPages: 0,
   });
+
+  // Modal States
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, id: "", loading: false });
+  const [statusModal, setStatusModal] = useState({ isOpen: false, id: "", currentStatus: "", loading: false });
 
   const fetchSubAdmins = useCallback(async (page: number, searchTerm = "") => {
     setLoading(true);
@@ -54,17 +60,38 @@ export default function SubAdminPage() {
     return () => clearTimeout(delayDebounceFn);
   }, [search, fetchSubAdmins]);
 
-  const toggleStatus = async (id: string, currentStatus: string) => {
+  const handleToggleStatus = async () => {
+    const { id, currentStatus } = statusModal;
     const newStatus = currentStatus === "active" ? "inactive" : "active";
+    setStatusModal((prev) => ({ ...prev, loading: true }));
     try {
       const res = await axios.patch("/api/sub-admin", { id, status: newStatus });
       if (res.data.success) {
         setSubAdmins((prev) =>
           prev.map((sa) => (sa._id === id ? { ...sa, status: newStatus as any } : sa))
         );
+        setStatusModal({ isOpen: false, id: "", currentStatus: "", loading: false });
       }
     } catch (err) {
       console.error("Error toggling status:", err);
+    } finally {
+      setStatusModal((prev) => ({ ...prev, loading: false }));
+    }
+  };
+
+  const handleDelete = async () => {
+    const { id } = deleteModal;
+    setDeleteModal((prev) => ({ ...prev, loading: true }));
+    try {
+      const res = await axios.delete(`/api/sub-admin?id=${id}`);
+      if (res.data.success) {
+        setSubAdmins((prev) => prev.filter((sa) => sa._id !== id));
+        setDeleteModal({ isOpen: false, id: "", loading: false });
+      }
+    } catch (err) {
+      console.error("Error deleting sub admin:", err);
+    } finally {
+      setDeleteModal((prev) => ({ ...prev, loading: false }));
     }
   };
 
@@ -215,26 +242,27 @@ export default function SubAdminPage() {
                       </div>
                     </td>
                     <td className="px-4 py-2">
-                      <button
-                        onClick={() => toggleStatus(sa._id, sa.status)}
-                        className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-[9px] font-bold transition-all ${
-                          sa.status === "active"
-                            ? "bg-green-50 text-green-700 border border-green-100"
-                            : "bg-zinc-100 text-zinc-600 border border-zinc-200"
-                        }`}
-                      >
-                        {sa.status === "active" ? (
-                          <>
-                            <div className="w-1.5 h-1.5 rounded-full bg-green-600 animate-pulse" />
-                            ACTIVE
-                          </>
-                        ) : (
-                          <>
-                            <div className="w-1.5 h-1.5 rounded-full bg-zinc-400" />
-                            INACTIVE
-                          </>
-                        )}
-                      </button>
+                      <div className="flex items-center gap-2.5">
+                        <button
+                          onClick={() => setStatusModal({ isOpen: true, id: sa._id, currentStatus: sa.status, loading: false })}
+                          className="relative inline-flex h-4 w-8 items-center rounded-full transition-all focus:outline-none cursor-pointer"
+                          style={{
+                            backgroundColor: sa.status === "active" ? themeColors.primary : "#e4e4e7",
+                          }}
+                        >
+                          <span
+                            className={`inline-block h-2.5 w-2.5 transform rounded-full bg-white transition-transform ${
+                              sa.status === "active" ? "translate-x-4.5" : "translate-x-1"
+                            }`}
+                          />
+                        </button>
+                        <span 
+                          className="text-[9px] font-bold tracking-tighter"
+                          style={{ color: sa.status === "active" ? themeColors.primary : "#71717a" }}
+                        >
+                          {sa.status === "active" ? "ACTIVE" : "INACTIVE"}
+                        </span>
+                      </div>
                     </td>
                     <td className="px-4 py-2">
                       <div className="flex items-center gap-1.5 text-zinc-500">
@@ -243,9 +271,15 @@ export default function SubAdminPage() {
                       </div>
                     </td>
                     <td className="px-4 py-2">
-                      <button className="p-1.5 rounded-lg hover:bg-zinc-100 transition-colors" style={{ color: themeColors.textSecondary }}>
-                        <MoreVertical size={14} />
-                      </button>
+                      <div className="flex items-center gap-1">
+                        <button 
+                          onClick={() => setDeleteModal({ isOpen: true, id: sa._id, loading: false })}
+                          className="p-1.5 rounded-lg hover:bg-red-50 text-red-500 transition-colors cursor-pointer" 
+                          title="Delete"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -287,6 +321,28 @@ export default function SubAdminPage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSuccess={() => fetchSubAdmins(1, search)}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ ...deleteModal, isOpen: false })}
+        onConfirm={handleDelete}
+        isLoading={deleteModal.loading}
+        title="Delete Sub Admin"
+        message="Are you sure you want to remove this sub admin? This action cannot be undone."
+      />
+
+      {/* Status Change Confirmation Modal */}
+      <DeleteModal
+        isOpen={statusModal.isOpen}
+        onClose={() => setStatusModal({ ...statusModal, isOpen: false })}
+        onConfirm={handleToggleStatus}
+        isLoading={statusModal.loading}
+        title={`${statusModal.currentStatus === "active" ? "Deactivate" : "Activate"} Sub Admin`}
+        message={`Are you sure you want to ${statusModal.currentStatus === "active" ? "deactivate" : "activate"} this sub admin?`}
+        confirmText={statusModal.currentStatus === "active" ? "Deactivate" : "Activate"}
+        confirmIcon={statusModal.currentStatus === "active" ? <ToggleLeft size={16} /> : <ToggleRight size={16} />}
       />
     </div>
   );
