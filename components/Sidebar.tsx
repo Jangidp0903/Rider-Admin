@@ -1,13 +1,14 @@
 "use client";
 import React from "react";
 import { usePathname } from "next/navigation";
-import { Settings, X, LayoutDashboard, Bike, Users } from "lucide-react";
+import { Settings, X, LayoutDashboard, Bike, Users, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { themeColors } from "@/lib/themeColors";
 
 const menuItems = [
   { name: "Dashboard", icon: LayoutDashboard, path: "/admin/dashboard" },
   { name: "Rider Details", icon: Users, path: "/admin/riders" },
+  { name: "Sub Admin", icon: ShieldCheck, path: "/admin/sub-admin" },
   { name: "Profile Settings", icon: Settings, path: "/admin/settings" },
 ];
 

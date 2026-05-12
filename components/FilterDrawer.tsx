@@ -11,6 +11,7 @@ import {
   MapPin,
 } from "lucide-react";
 import { themeColors } from "@/lib/themeColors";
+import { HUB_OPTIONS } from "@/lib/constants";
 import CustomSelect from "./CustomSelect";
 import {
   FilterState,
@@ -91,15 +92,7 @@ function FilterContent({
         onChange={(v) => onChange("hubFilter", v)}
         options={[
           { label: "All Hubs", value: "all" },
-          { label: "Lawrence road", value: "Lawrence road" },
-          { label: "Uttam Nagar", value: "Uttam Nagar" },
-          {
-            label: "Peeragarhi",
-            value: "Peeragarhi",
-          },
-          { label: "Lado Sarai", value: "Lado Sarai" },
-          { label: "Okhla", value: "Okhla" },
-          { label: "Noida 73", value: "Noida 73" },
+          ...HUB_OPTIONS,
         ]}
       />
 

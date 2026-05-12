@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState, useRef } from "react";
+import { usePathname } from "next/navigation";
 import {
   Menu,
   ChevronLeft,
@@ -28,8 +29,16 @@ const Topbar = ({
   const userDropdownRef = useRef(null);
   const userBtnRef = useRef(null);
 
-  const [pageTitle] = useState("Dashboard");
+  const pathname = usePathname();
   const [adminName, setAdminName] = useState("Admin");
+
+  const pageTitle = React.useMemo(() => {
+    if (pathname.includes("/admin/dashboard")) return "Dashboard";
+    if (pathname.includes("/admin/riders")) return "Rider Details";
+    if (pathname.includes("/admin/sub-admin")) return "Sub Admin";
+    if (pathname.includes("/admin/settings")) return "Profile Settings";
+    return "Admin Panel";
+  }, [pathname]);
 
   useEffect(() => {
     const fetchAdmin = async () => {
